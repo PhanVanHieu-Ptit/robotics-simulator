@@ -6,10 +6,6 @@ export function Environment() {
 
   return (
     <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-      <pointLight position={[-5, 5, -5]} intensity={0.3} />
-
       {showGrid && (
         <Grid
           args={[20, 20]}
