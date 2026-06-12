@@ -1,0 +1,8 @@
+{
+  "id": "diff_drive",
+  "name": "Differential Drive Base",
+  "wheelBase": 0.5,
+  "wheelRadius": 0.1,
+  "maxLinearVel": 2.0,
+  "maxAngularVel": 3.14159
+}
