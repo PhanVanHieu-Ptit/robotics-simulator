@@ -2,7 +2,7 @@ import { Scene } from './Scene'
 import { Environment } from './Environment'
 import { RobotLoader } from '../robots/RobotLoader'
 import { ROBOT_MODELS } from '../hooks/useRobotLoader'
-import { TrajectoryLine } from '../overlays/TrajectoryLine'
+import { Trail } from '../overlays/Trail'
 import { CoordinateFrames } from '../overlays/CoordinateFrame'
 import { useSimulationFrame } from '../hooks/useSimulationFrame'
 
@@ -17,7 +17,7 @@ export function SceneRoot() {
       <SimulationLoop />
       <Environment />
       <RobotLoader config={ROBOT_MODELS.ridgeback_franka} />
-      <TrajectoryLine robotId="franka_panda" />
+      <Trail robotId="franka_panda" />
       <CoordinateFrames />
     </Scene>
   )
