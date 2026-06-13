@@ -1,8 +1,85 @@
+import type { ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Slider, Typography, Button, Empty, Divider } from 'antd'
 import { applyAngles, useManipulatorStore } from '@simulation/systems/ManipulatorSystem'
+import { useFKStore, type EEPose } from '@simulation/systems/ForwardKinematicsSystem'
 
 const { Title, Text } = Typography
+
+// ─── End-Effector Pose Display ──────────────────────────────────────────────
+
+const AXIS_COLORS = { X: '#ff6b6b', Y: '#6bcb77', Z: '#6baeff' } as const
+
+function PoseRow({ axis, value, unit = '' }: { axis: 'X' | 'Y' | 'Z'; value: number; unit?: string }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+      <Text style={{ color: AXIS_COLORS[axis], fontSize: 11, fontFamily: 'monospace', minWidth: 14 }}>
+        {axis}
+      </Text>
+      <Text style={{ color: '#e0e0e0', fontSize: 11, fontFamily: 'monospace' }}>
+        {value.toFixed(4)}{unit}
+      </Text>
+    </div>
+  )
+}
+
+function QuatRow({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+      <Text style={{ color: '#888', fontSize: 11, fontFamily: 'monospace', minWidth: 14 }}>
+        {label}
+      </Text>
+      <Text style={{ color: '#e0e0e0', fontSize: 11, fontFamily: 'monospace' }}>
+        {value.toFixed(4)}
+      </Text>
+    </div>
+  )
+}
+
+function EESection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <Text style={{ color: '#777', fontSize: 10, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+        {title}
+      </Text>
+      <div style={{ marginTop: 4 }}>{children}</div>
+    </div>
+  )
+}
+
+function EndEffectorDisplay() {
+  const isReady = useFKStore(s => s.isReady)
+  const pose = useFKStore(s => s.pose) as EEPose
+
+  if (!isReady) {
+    return (
+      <Text style={{ color: '#555', fontSize: 11 }}>Waiting for joints…</Text>
+    )
+  }
+
+  return (
+    <div>
+      <EESection title="Position (m)">
+        <PoseRow axis="X" value={pose.px} />
+        <PoseRow axis="Y" value={pose.py} />
+        <PoseRow axis="Z" value={pose.pz} />
+      </EESection>
+
+      <EESection title="Quaternion (XYZW)">
+        <QuatRow label="X" value={pose.qx} />
+        <QuatRow label="Y" value={pose.qy} />
+        <QuatRow label="Z" value={pose.qz} />
+        <QuatRow label="W" value={pose.qw} />
+      </EESection>
+
+      <EESection title="Euler XYZ (°)">
+        <PoseRow axis="X" value={pose.rx} unit="°" />
+        <PoseRow axis="Y" value={pose.ry} unit="°" />
+        <PoseRow axis="Z" value={pose.rz} unit="°" />
+      </EESection>
+    </div>
+  )
+}
 
 // Null-rendering R3F component — must live inside <Canvas>.
 // Bridges Zustand angle state → Three.js node mutations every frame.
@@ -64,6 +141,14 @@ export function ManipulatorControls() {
       <Button block onClick={resetAngles} style={{ fontSize: 12 }}>
         Reset All
       </Button>
+
+      <Divider style={{ borderColor: '#2a2a3a', margin: '14px 0 10px' }} />
+
+      <Title level={5} style={{ color: '#fff', marginBottom: 10, fontSize: 13 }}>
+        End Effector
+      </Title>
+
+      <EndEffectorDisplay />
     </div>
   )
 }

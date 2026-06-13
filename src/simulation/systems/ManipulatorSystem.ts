@@ -10,6 +10,11 @@ export type JointDescriptor = Pick<HierarchyNode, 'uuid' | 'name'>
 // Read every frame by applyAngles() inside useFrame.
 const nodeMap = new Map<string, THREE.Object3D>()
 
+/** Expose the node registry for ForwardKinematicsSystem to read matrixWorld. */
+export function getNodeMap(): ReadonlyMap<string, THREE.Object3D> {
+  return nodeMap
+}
+
 export function registerNodes(scene: THREE.Object3D, joints: JointDescriptor[]): void {
   nodeMap.clear()
   const uuidSet = new Set(joints.map((j) => j.uuid))

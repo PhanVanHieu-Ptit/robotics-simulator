@@ -8,12 +8,14 @@ import { ROBOT_MODELS } from '../hooks/useRobotLoader'
 import type { LoadedRobot } from '../hooks/useRobotLoader'
 import { Trail } from '../overlays/Trail'
 import { CoordinateFrames } from '../overlays/CoordinateFrame'
+import { EndEffectorFrame } from '../overlays/EndEffectorFrame'
 import { useSimulationFrame } from '../hooks/useSimulationFrame'
 import { useRobotStore } from '@store/robotStore'
 import { useRendererStore } from '@store/rendererStore'
 import { useModelInspectorStore } from '@store/modelInspectorStore'
 import { traverseHierarchy } from '../utils/traverseHierarchy'
 import { registerNodes, useManipulatorStore } from '@simulation/systems/ManipulatorSystem'
+import { initFK } from '@simulation/systems/ForwardKinematicsSystem'
 import { ManipulatorRenderer } from '@ui/panels/ManipulatorControls'
 
 function SimulationLoop() {
@@ -48,6 +50,7 @@ function MovingRobot() {
     })
     registerNodes(robot.scene, result.jointCandidates)
     useManipulatorStore.getState().setJoints(result.jointCandidates)
+    initFK(result.jointCandidates)
   }, [])
 
   useFrame(() => {
@@ -70,6 +73,7 @@ export function SceneRoot() {
       <SimulationLoop />
       <RendererProbe />
       <ManipulatorRenderer />
+      <EndEffectorFrame />
       <Environment />
       <MovingRobot />
       <Trail robotId="franka_panda" />
