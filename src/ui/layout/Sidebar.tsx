@@ -1,12 +1,20 @@
 import { Tabs } from 'antd'
-import { JointPanel }   from '../panels/JointPanel'
-import { ControlPanel } from '../panels/ControlPanel'
-import { ConfigPanel }  from '../panels/ConfigPanel'
+import { JointPanel }           from '../panels/JointPanel'
+import { ControlPanel }         from '../panels/ControlPanel'
+import { ConfigPanel }          from '../panels/ConfigPanel'
+import { TelemetryPanel }       from '../panels/TelemetryPanel'
+import { PerformancePanel }     from '../panels/PerformancePanel'
+import { HierarchyPanel }       from '../panels/HierarchyPanel'
+import { ManipulatorControls }  from '../panels/ManipulatorControls'
 
 const TAB_ITEMS = [
-  { key: 'joints',   label: 'Joints',   children: <JointPanel /> },
-  { key: 'drive',    label: 'Drive',    children: <ControlPanel /> },
-  { key: 'config',   label: 'Config',   children: <ConfigPanel /> },
+  { key: 'arm',         label: 'Arm',       children: <ManipulatorControls /> },
+  { key: 'joints',      label: 'Joints',    children: <JointPanel /> },
+  { key: 'drive',       label: 'Drive',     children: <ControlPanel /> },
+  { key: 'hierarchy',   label: 'Hierarchy', children: <HierarchyPanel /> },
+  { key: 'config',      label: 'Config',    children: <ConfigPanel /> },
+  { key: 'telemetry',   label: 'Telemetry', children: <TelemetryPanel /> },
+  { key: 'performance', label: 'Perf',      children: <PerformancePanel /> },
 ]
 
 export function Sidebar() {
@@ -24,7 +32,7 @@ export function Sidebar() {
       <Tabs
         size="small"
         items={TAB_ITEMS}
-        defaultActiveKey="joints"
+        defaultActiveKey="arm"
         style={{ color: '#ccc' }}
       />
     </aside>

@@ -4,7 +4,8 @@
       "Bash(grep -v \"^\\\\.git$\")",
       "Bash(node -e \"const f = require\\('./src/config/robots/franka_panda.json'\\); console.log\\('dof:', f.dof, '| joints:', f.dhParams.length, '| limits:', f.jointLimits.length\\)\")",
       "Bash(python3 -c \"import json; f=json.load\\(open\\('src/config/robots/franka_panda.json'\\)\\); print\\('dof:', f['dof'], '| dhParams:', len\\(f['dhParams']\\), '| limits:', len\\(f['jointLimits']\\)\\)\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(xargs cat -n)"
     ]
   }
 }
