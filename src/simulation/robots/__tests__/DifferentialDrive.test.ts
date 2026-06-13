@@ -27,6 +27,35 @@ describe('DifferentialDrive', () => {
     expect(robot.state.jointStates).toHaveLength(2)
   })
 
+  it('initial dhTransforms[0] is identity (pose at origin, theta=0)', () => {
+    const t = robot.state.dhTransforms[0]!
+    // cos(0)=1, sin(0)=0 — row-major: [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]
+    expect(t[0]).toBeCloseTo(1, 10)  // cos(0)
+    expect(t[2]).toBeCloseTo(0, 10)  // -sin(0)
+    expect(t[3]).toBeCloseTo(0, 10)  // x=0
+    expect(t[8]).toBeCloseTo(0, 10)  // sin(0)
+    expect(t[11]).toBeCloseTo(0, 10) // y=0
+  })
+
+  it('dhTransforms[0] encodes translation after forward motion', () => {
+    robot.applyCommand({ type: 'DRIVE', linear: 1.0, angular: 0 })
+    robot.step(1)
+    const t = robot.state.dhTransforms[0]!
+    expect(t[3]).toBeCloseTo(1.0, 5)  // x translation
+    expect(t[11]).toBeCloseTo(0, 5)   // z translation (sim y)
+  })
+
+  it('dhTransforms[0] encodes rotation after pure turn', () => {
+    robot.applyCommand({ type: 'DRIVE', linear: 0, angular: Math.PI / 2 })
+    robot.step(1)
+    const theta = Math.PI / 2
+    const t = robot.state.dhTransforms[0]!
+    expect(t[0]).toBeCloseTo(Math.cos(theta), 5)   // col0 row0: cos(θ)
+    expect(t[2]).toBeCloseTo(-Math.sin(theta), 5)  // col2 row0: -sin(θ)
+    expect(t[8]).toBeCloseTo(Math.sin(theta), 5)   // col0 row2: sin(θ)
+    expect(t[10]).toBeCloseTo(Math.cos(theta), 5)  // col2 row2: cos(θ)
+  })
+
   // ── applyCommand — DRIVE ──────────────────────────────────────────────────
 
   describe('applyCommand DRIVE', () => {

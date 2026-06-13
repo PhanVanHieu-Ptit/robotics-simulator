@@ -1,5 +1,5 @@
 import type { Command } from '../types/Command'
-import type { Pose2D, Pose3D, RobotState } from '../types/RobotState'
+import type { Mat4, Pose2D, Pose3D, RobotState } from '../types/RobotState'
 import type { Robot } from './Robot'
 
 export interface DifferentialDriveConfig {
@@ -11,7 +11,6 @@ export interface DifferentialDriveConfig {
 }
 
 const ZERO_POSE3D: Pose3D = { position: [0, 0, 0], quaternion: [0, 0, 0, 1] }
-const IDENTITY16 = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1] as const
 
 export class DifferentialDrive implements Robot {
   readonly id: string
@@ -27,6 +26,16 @@ export class DifferentialDrive implements Robot {
   }
 
   private buildState(pose: Pose2D, leftAngle: number, rightAngle: number): RobotState {
+    const c = Math.cos(pose.theta)
+    const s = Math.sin(pose.theta)
+    // Row-major 4×4 world-space transform: Y-up rotation about Y axis in XZ plane.
+    // Matches the Three.js rendering convention: position(x, 0, y), rotation.y = -theta.
+    const basePoseTransform: Mat4 = [
+       c, 0, -s, pose.x,
+       0, 1,  0, 0,
+       s, 0,  c, pose.y,
+       0, 0,  0, 1,
+    ]
     return {
       id: this.cfg.id,
       jointStates: [
@@ -35,7 +44,7 @@ export class DifferentialDrive implements Robot {
       ],
       basePose: pose,
       endEffectorPose: ZERO_POSE3D,
-      dhTransforms: [IDENTITY16],
+      dhTransforms: [basePoseTransform],
     }
   }
 
