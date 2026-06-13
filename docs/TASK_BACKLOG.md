@@ -32,6 +32,7 @@
 | T-006 | Fix `toThreeMatrix()` to mutate existing `Matrix4` instead of allocating | `src/rendering/robots/FrankaArm.tsx` | PERF-1: 7 allocations/frame → GC pressure |
 | T-007 | Fix FPS metric to use wall-clock, not tick time | `src/ui/panels/PerformanceMonitor.tsx` | BUG-2: shows unrealistic numbers |
 | T-008 | Replace `TrajectorySystem` splice with head/tail ring buffer | `src/simulation/systems/TrajectorySystem.ts` | PERF-4: O(n) at cap (2000 entries) |
+| T-021 | Wire `RobotLoader` into `SceneRoot` for `ridgeback_franka` | `src/rendering/scene/SceneRoot.tsx`, `src/rendering/robots/RobotLoader.tsx` | Component + hook built; just needs mounting in the scene tree alongside or replacing primitive meshes |
 
 ---
 

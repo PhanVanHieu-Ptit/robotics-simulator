@@ -52,6 +52,7 @@
 |-----------|------|-------------|-------|
 | `FrankaArmMesh` | `robots/FrankaArm.tsx` | `robotStore` (dhTransforms, jointAngles) | 7 joint groups; uses `matrix` prop + `matrixAutoUpdate={false}` |
 | `DiffDriveRobot` | `robots/DifferentialDriveRobot.tsx` | `robotStore` (basePose, jointAngles[0,1]) | 3 subscriptions (PERF-2); chassis + 2 wheels |
+| `RobotLoader` | `robots/RobotLoader.tsx` | none | Loads a GLB model; wraps `useRobotLoader` with Suspense + error boundary; exposes `onLoad`/`onError` callbacks |
 
 ### Shared Primitives (`src/rendering/robots/shared/`)
 
@@ -77,6 +78,7 @@
 |------|------|-------|
 | `useSimulationFrame` | `hooks/useSimulationFrame.ts` | Drives `engine.tick(delta)` from R3F `useFrame`; updates stores via `onSnapshot` |
 | `useRobotGeometry` | `hooks/useRobotGeometry.ts` | Memoized Three.js geometries to avoid per-render allocation |
+| `useRobotLoader` | `hooks/useRobotLoader.ts` | Loads a GLB via `useGLTF`; clones scene; exposes `ROBOT_MODELS` registry and `.preload()` |
 
 ---
 
@@ -122,5 +124,8 @@ App
                │   └─ Link (×7)
                ├─ DiffDriveRobot
                ├─ TrajectoryLine
-               └─ CoordinateFrames
+               ├─ CoordinateFrames
+               └─ RobotLoader (not yet wired; see T-021)
+                   ├─ RobotErrorBoundary
+                   └─ Suspense → RobotMesh → <primitive />
 ```

@@ -30,6 +30,8 @@ The primary use case is interactive exploration: drag joint sliders, drive the b
 ## Repository Layout
 
 ```
+public/
+└── models/              # Static GLB assets served by Vite (ridgeback_franka.glb)
 src/
 ├── simulation/          # Pure-TS simulation core (no React, no Three)
 │   ├── core/            # Engine, Clock, EventBus
@@ -39,10 +41,10 @@ src/
 │   ├── types/           # Command, RobotState, WorldSnapshot
 │   └── world/           # SimulationWorld, Obstacle
 ├── rendering/           # R3F scene, robot meshes, overlays
-│   ├── robots/          # FrankaArmMesh, DiffDriveRobot (read Zustand, render only)
+│   ├── robots/          # FrankaArmMesh, DiffDriveRobot, RobotLoader (GLB-based)
 │   ├── scene/           # SceneRoot (Canvas), CameraController, Environment
 │   ├── overlays/        # TrajectoryLine, CoordinateFrame
-│   └── hooks/           # useSimulationFrame, useRobotGeometry
+│   └── hooks/           # useSimulationFrame, useRobotGeometry, useRobotLoader
 ├── store/               # Zustand slices (simulation, robot, scene)
 ├── ui/                  # Ant Design panels, layout, components
 ├── input/               # KeyboardController, InputMapper, useInputController
@@ -63,6 +65,7 @@ src/
 | Joint slider control | Working |
 | Trajectory visualization | Working |
 | Coordinate frame overlay | Working |
+| GLB model loading (RobotLoader) | **Built — not yet wired into scene (T-021)** |
 | Inverse kinematics | **Stub — throws** |
 | Collision detection | **Stub — no-op** |
 | Path planning | **Stub — no-op** |

@@ -69,6 +69,7 @@
 | Bounding box overlays | 🔶 | `sceneStore` toggle exists; rendering not implemented |
 | Camera presets | ✅ | `CameraController.tsx`, `sceneStore.ts` |
 | Orbit controls | ✅ | `CameraController.tsx` (`OrbitControls` from drei) |
+| GLB model loading (RobotLoader) | 🔶 | `rendering/robots/RobotLoader.tsx`, `rendering/hooks/useRobotLoader.ts` — component built, not yet wired into SceneRoot (T-021) |
 
 ---
 

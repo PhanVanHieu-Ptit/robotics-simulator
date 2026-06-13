@@ -1,7 +1,7 @@
 import { Scene } from './Scene'
 import { Environment } from './Environment'
-import { FrankaArmMesh } from '../robots/FrankaArm'
-import { DiffDriveRobot } from '../robots/DifferentialDriveRobot'
+import { RobotLoader } from '../robots/RobotLoader'
+import { ROBOT_MODELS } from '../hooks/useRobotLoader'
 import { TrajectoryLine } from '../overlays/TrajectoryLine'
 import { CoordinateFrames } from '../overlays/CoordinateFrame'
 import { useSimulationFrame } from '../hooks/useSimulationFrame'
@@ -16,8 +16,7 @@ export function SceneRoot() {
     <Scene>
       <SimulationLoop />
       <Environment />
-      <DiffDriveRobot />
-      <FrankaArmMesh />
+      <RobotLoader config={ROBOT_MODELS.ridgeback_franka} />
       <TrajectoryLine robotId="franka_panda" />
       <CoordinateFrames />
     </Scene>
