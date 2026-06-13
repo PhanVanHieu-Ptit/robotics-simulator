@@ -14,6 +14,7 @@ const ZERO_POSE3D: Pose3D = { position: [0, 0, 0], quaternion: [0, 0, 0, 1] }
 const IDENTITY16 = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1] as const
 
 export class DifferentialDrive implements Robot {
+  readonly id: string
   state: RobotState
   readonly trajectoryBuffer: Pose3D[] = []
 
@@ -21,6 +22,7 @@ export class DifferentialDrive implements Robot {
   private _angular = 0
 
   constructor(private readonly cfg: DifferentialDriveConfig) {
+    this.id    = cfg.id
     this.state = this.buildState({ x: 0, y: 0, theta: 0 }, 0, 0)
   }
 

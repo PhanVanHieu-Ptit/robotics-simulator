@@ -12,12 +12,14 @@ export interface FrankaArmConfig {
 }
 
 export class FrankaArm implements Robot {
+  readonly id: string
   state: RobotState
   readonly trajectoryBuffer: Pose3D[] = []
 
   private _angles: number[]
 
   constructor(private readonly cfg: FrankaArmConfig) {
+    this.id      = cfg.id
     this._angles = [...cfg.initialAngles]
     this.state   = this.buildState()
   }
