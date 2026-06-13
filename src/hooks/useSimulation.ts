@@ -54,7 +54,7 @@ function createEngine(): SimulationEngine {
     (snapshot) => {
       useRobotStore.getState().applySnapshot(snapshot)
       if (useSimulationStore.getState().isRunning) {
-        metricsStore.update(snapshot.simTime, snapshot.frameTime)
+        metricsStore.update(snapshot.simTime, snapshot.frameTime, snapshot.wallDeltaSec)
       }
     },
   )

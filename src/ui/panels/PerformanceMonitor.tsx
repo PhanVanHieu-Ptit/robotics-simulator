@@ -25,10 +25,10 @@ export function PerformanceMonitor() {
   const fpsRef   = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    return metricsStore.subscribe((simTime, frameTime) => {
+    return metricsStore.subscribe((simTime, frameTime, wallFps) => {
       if (simRef.current)   simRef.current.textContent   = `${simTime.toFixed(2)}s`
       if (frameRef.current) frameRef.current.textContent = `${frameTime.toFixed(1)}ms`
-      const fps = frameTime > 0 ? (1000 / frameTime).toFixed(0) : '—'
+      const fps = wallFps > 0 ? wallFps.toFixed(0) : '—'
       if (fpsRef.current) {
         fpsRef.current.textContent = fps
         fpsRef.current.style.color = Number(fps) < 30 ? '#ff4d4f' : '#52c41a'

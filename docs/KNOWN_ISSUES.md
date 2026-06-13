@@ -17,14 +17,9 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ---
 
-### BUG-2: `PerformanceMonitor` FPS is computed from simulation frame time, not wall-clock FPS
+### ~~BUG-2: `PerformanceMonitor` FPS is computed from simulation frame time, not wall-clock FPS~~ FIXED
 
-**File**: [src/ui/panels/PerformanceMonitor.tsx](src/ui/panels/PerformanceMonitor.tsx)
-**Severity**: Low
-
-`fps = 1000 / frameTime` where `frameTime` is the time spent inside `SimulationEngine.tick()` (physics work, not full frame time). At 60 Hz with a cheap physics tick, this will show "500 FPS" or similar nonsense. Actual render FPS is not captured.
-
-**Fix**: Track wall-clock delta in `useSimulationFrame` and store it separately, or compute FPS as `1 / rawDelta` from R3F's `useFrame` delta.
+`wallDeltaSec` is now propagated through `WorldSnapshot` → `metricsStore` → `PerformanceMonitor`. FPS is computed as `1 / wallDeltaSec` (real frame rate from R3F's rAF delta). `frameTime` remains the physics tick work time and is shown separately as the "FRAME" metric.
 
 ---
 
@@ -39,14 +34,9 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ---
 
-### BUG-4: `InputMapper` speed constants diverge from robot config limits
+### ~~BUG-4: `InputMapper` speed constants diverge from robot config limits~~ FIXED
 
-**File**: [src/input/InputMapper.ts](src/input/InputMapper.ts) vs [src/config/robots/differential_drive.json](src/config/robots/differential_drive.json)
-**Severity**: Low
-
-`LINEAR_SPEED = 1.5 m/s` and `ANGULAR_SPEED = 2.0 rad/s` are hardcoded constants that do not match the robot config's `maxLinearVel: 2.0` and `maxAngularVel: 3.14`. This means keyboard input never reaches the configured maximum speed.
-
-**Fix**: Import and use `diffDriveConfig.maxLinearVel` / `maxAngularVel` from the JSON config.
+`InputMapper.ts` now imports `diffDriveConfig` and reads `maxLinearVel` / `maxAngularVel` directly. Tests updated to match. Keyboard input now reaches the configured maximum speed (2.0 m/s, 3.14 rad/s).
 
 ---
 
