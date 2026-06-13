@@ -160,6 +160,72 @@ Emitted every tick via `engine.onSnapshot`. Consumed by `useSimulationFrame` to 
 
 ---
 
+## RobotLoader API
+
+File: `src/rendering/hooks/useRobotLoader.ts`, `src/rendering/robots/RobotLoader.tsx`
+
+### `RobotModelConfig`
+
+```ts
+interface RobotModelConfig {
+  readonly id: string
+  readonly name: string
+  readonly path: string   // URL path to .glb; file must be under public/
+  readonly scale?: number
+  readonly position?: readonly [number, number, number]
+  readonly rotation?: readonly [number, number, number]
+}
+```
+
+### `LoadedRobot`
+
+```ts
+interface LoadedRobot {
+  readonly scene: THREE.Group   // Cloned scene — safe for multiple instances
+  readonly gltf: GLTF           // Raw drei GLTF result (animations, cameras, etc.)
+  readonly config: RobotModelConfig
+}
+```
+
+### `ROBOT_MODELS` registry
+
+```ts
+const ROBOT_MODELS = {
+  ridgeback_franka: { id, name, path: '/models/ridgeback_franka.glb', scale: 1, ... }
+} satisfies Record<string, RobotModelConfig>
+
+type RobotModelId = keyof typeof ROBOT_MODELS  // 'ridgeback_franka' | ...
+```
+
+Add future robot models as additional entries here.
+
+### `useRobotLoader(config)`
+
+```ts
+// Must be called inside a <Suspense> boundary.
+function useRobotLoader(config: RobotModelConfig): LoadedRobot
+useRobotLoader.preload(config: RobotModelConfig): void
+```
+
+Suspends until the GLB finishes loading. Pass a stable config reference (e.g. `ROBOT_MODELS.ridgeback_franka`) to avoid unnecessary re-clones.
+
+### `RobotLoader` component
+
+```ts
+interface RobotLoaderProps {
+  config: RobotModelConfig
+  onLoad?: (robot: LoadedRobot) => void   // called once GLB is ready
+  onError?: (error: Error) => void        // called if loading fails
+  position?: [number, number, number]
+  scale?: number
+  visible?: boolean
+}
+```
+
+Renders a **blue wireframe cube** while loading, a **red wireframe cube** on error.
+
+---
+
 ## DH Parameter Schema
 
 File: `src/config/robots/franka_panda.json`

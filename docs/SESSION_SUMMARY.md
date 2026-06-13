@@ -6,7 +6,7 @@
 
 A browser-based 3D robotics simulator built with React 18 + TypeScript + Three.js (@react-three/fiber). It visualizes two robots — a 7-DOF Franka Panda arm and a differential-drive mobile base — in real time. Forward kinematics, trajectory recording, and keyboard/UI control work. Inverse kinematics, collision detection, and path planning are **stubbed but not implemented**.
 
-## Current State (as of 2026-06-12)
+## Current State (as of 2026-06-13)
 
 | Area | Status |
 |------|--------|
@@ -16,6 +16,7 @@ A browser-based 3D robotics simulator built with React 18 + TypeScript + Three.j
 | UI Controls | Working — sliders, drive buttons, toolbar |
 | Keyboard Input | Working — WASD/arrow keys |
 | Trajectory Visualization | Working — polyline, ring buffer |
+| GLB Model Loading | Built — `RobotLoader` + `useRobotLoader`; not yet wired into scene (T-021) |
 | Inverse Kinematics | **Stub — throws on call** |
 | Collision Detection | **Stub — no-op system** |
 | Path Planning | **Stub — no-op system** |

@@ -95,6 +95,37 @@ Environment.tsx        — Grid helper + GizmoHelper; reads sceneStore.showGrid
 SceneRoot.tsx          — Composes <Scene> with all simulation content as children
 ```
 
+---
+
+## GLB Model Loading
+
+Robot meshes can alternatively be loaded from `.glb` files rather than constructed from primitives.
+
+**Asset serving:** GLB files must reside under `public/` so Vite's dev server serves them at the root URL. The `ridgeback_franka.glb` (11 MB) is at `public/models/ridgeback_franka.glb` and is referenced as `/models/ridgeback_franka.glb`.
+
+**`useRobotLoader(config)` — `src/rendering/hooks/useRobotLoader.ts`**
+
+- Wraps `useGLTF` from `@react-three/drei` (Suspense-based; suspends until loaded)
+- Clones `gltf.scene` with `clone(true)` so multiple instances are independent
+- Memoizes on `config.path` to avoid unnecessary re-clones
+- Exposes `useRobotLoader.preload(config)` for eager background loading
+
+**`ROBOT_MODELS` registry**
+
+A `satisfies Record<string, RobotModelConfig>` const in `useRobotLoader.ts`. Adding a new robot model requires one entry here — no other files need changing.
+
+**`RobotLoader` component — `src/rendering/robots/RobotLoader.tsx`**
+
+```
+RobotLoader
+  └─ RobotErrorBoundary (class)   ← catches load errors; renders red wireframe cube; calls onError
+       └─ Suspense                 ← shows blue wireframe cube while GLB loads
+            └─ RobotMesh           ← calls useRobotLoader; fires onLoad via useEffect
+                 └─ <primitive />  ← mounts the cloned scene graph
+```
+
+The nested `<Suspense>` overrides the outer `fallback={null}` in `Scene.tsx` for this subtree only.
+
 **Performance settings applied in `Scene`:**
 - `dpr={[1, 1.5]}` — caps pixel ratio; 44 % GPU fill reduction on 2× Retina vs uncapped
 - `performance={{ min: 0.5 }}` — R3F adaptive performance: reduces DPR when frame time spikes
