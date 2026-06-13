@@ -42,38 +42,15 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ## Performance Risks
 
-### PERF-1: `toThreeMatrix()` allocates a new `THREE.Matrix4` every render frame
+### ~~PERF-1: `toThreeMatrix()` allocates a new `THREE.Matrix4` every render frame~~ FIXED
 
-**File**: [src/rendering/robots/FrankaArm.tsx](src/rendering/robots/FrankaArm.tsx)
-**Severity**: High (7 allocations per frame at 60 Hz = 420 objects/sec → GC pressure)
-
-```ts
-// Current — allocates on every render
-matrix={mat ? toThreeMatrix(mat) : undefined}
-```
-
-**Fix**: Use `useRef` to hold a stable `Matrix4` array, then update in a `useEffect` or directly mutate via `group.matrix.set(...)` in `useFrame`.
+`FrankaArmMesh` now uses `useFrame` + `group.matrix.set(...)` (direct mutation). The `useRobotStore` React subscription is removed entirely — the component produces zero React re-renders and zero `Matrix4` allocations per frame.
 
 ---
 
-### PERF-2: `DiffDriveRobot` has 3 separate Zustand subscriptions
+### ~~PERF-2: `DiffDriveRobot` has 3 separate Zustand subscriptions~~ FIXED
 
-**File**: [src/rendering/robots/DifferentialDriveRobot.tsx](src/rendering/robots/DifferentialDriveRobot.tsx)
-**Severity**: Medium
-
-Three `useRobotStore()` calls → three separate re-render triggers per tick.
-
-**Fix**: Combine into one selector that returns a single stable object:
-```ts
-const { basePose, leftAngle, rightAngle } = useRobotStore(
-  (s) => ({
-    basePose:   s.basePose,
-    leftAngle:  s.robotSnapshots['diff_drive']?.jointStates[0]?.angle ?? 0,
-    rightAngle: s.robotSnapshots['diff_drive']?.jointStates[1]?.angle ?? 0,
-  }),
-  shallow,
-)
-```
+`DifferentialDriveRobot` already uses `useFrame` + `useRobotStore.getState()` — no React subscription hook calls, zero re-renders per tick.
 
 ---
 
@@ -88,18 +65,9 @@ const { basePose, leftAngle, rightAngle } = useRobotStore(
 
 ---
 
-### PERF-4: `TrajectorySystem` uses `splice()` for ring-buffer trimming
+### ~~PERF-4: `TrajectorySystem` uses `splice()` for ring-buffer trimming~~ FIXED
 
-**File**: [src/simulation/systems/TrajectorySystem.ts](src/simulation/systems/TrajectorySystem.ts)
-**Severity**: Medium (O(n) shift at `maxTrajectoryLength = 2000`)
-
-```ts
-robot.trajectoryBuffer.splice(0, robot.trajectoryBuffer.length - SimulationConfig.maxTrajectoryLength)
-```
-
-At cap, this shifts 2000 elements every tick it fires.
-
-**Fix**: Replace `trajectoryBuffer: Pose3D[]` with a fixed-size ring buffer class (head/tail index).
+`TrajectorySystem` now uses `PositionRingBuffer` — a fixed-size circular buffer with O(1) push. No array shifting at cap. `writeTo(Float32Array)` linearises in one pass for renderers.
 
 ---
 
@@ -200,10 +168,6 @@ These are manually entered and partially match the DH `d` parameters in `franka_
 
 ---
 
-### INC-3: `DifferentialDrive.dhTransforms` is always the identity matrix
+### ~~INC-3: `DifferentialDrive.dhTransforms` is always the identity matrix~~ FIXED
 
-**File**: [src/simulation/robots/DifferentialDrive.ts](src/simulation/robots/DifferentialDrive.ts) — `buildState()`
-
-`dhTransforms: [IDENTITY16]` is returned regardless of base pose. The base pose is correctly tracked in `basePose: Pose2D`, but the transform representation is never updated. This is misleading for any consumer that expects `dhTransforms[0]` to be the world-space pose.
-
-**Fix**: Compute a proper 4×4 transform from `(x, y, theta)` and place it in `dhTransforms[0]`.
+`buildState()` now computes a proper row-major 4×4 world-space transform from `(x, y, theta)` matching the Three.js Y-up, XZ-plane convention. Three tests added to `DifferentialDrive.test.ts` verify identity at origin and correct encoding of translation and rotation.
