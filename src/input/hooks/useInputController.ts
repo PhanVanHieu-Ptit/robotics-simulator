@@ -2,37 +2,34 @@ import { useEffect, useRef } from 'react'
 import { KeyboardController } from '../KeyboardController'
 import { mapInputToCommands }  from '../InputMapper'
 import { useRobotCommands }    from '@hooks/useRobotCommands'
-import { useSimulationStore }  from '@store/simulationStore'
 
 /**
  * Mounts keyboard input and pipes it to the simulation command queue
  * on every animation frame.  Must be called once at the app root level.
  *
- * Mirrors isRunning/isPaused into a plain ref via Zustand's vanilla subscribe
- * so InputGate is NEVER re-rendered by store changes (same pattern as
- * useSimulationFrame).
+ * Always active — no isRunning gate — so controls work immediately
+ * without requiring the user to click Run first.
  */
 export function useInputController(): void {
   const { dispatch } = useRobotCommands()
-  const kbRef    = useRef(new KeyboardController())
-  const rafRef   = useRef<number | null>(null)
-  const activeRef = useRef(false)
+  const kbRef       = useRef(new KeyboardController())
+  const rafRef      = useRef<number | null>(null)
+  const wasMovingRef = useRef(false)
 
   useEffect(() => {
-    const { isRunning, isPaused } = useSimulationStore.getState()
-    activeRef.current = isRunning && !isPaused
-
-    const unsub = useSimulationStore.subscribe((s) => {
-      activeRef.current = s.isRunning && !s.isPaused
-    })
-
     const kb = kbRef.current
     kb.mount()
 
     const loop = () => {
-      if (activeRef.current) {
-        const cmds = mapInputToCommands(kb.input)
+      const cmds = mapInputToCommands(kb.input)
+      if (cmds.length > 0) {
         cmds.forEach(dispatch)
+        wasMovingRef.current = true
+      } else if (wasMovingRef.current) {
+        // Transition: keys just released — send one explicit stop so the
+        // robot doesn't keep drifting at its last velocity.
+        dispatch({ type: 'DRIVE', linear: 0, angular: 0 })
+        wasMovingRef.current = false
       }
       rafRef.current = requestAnimationFrame(loop)
     }
@@ -40,7 +37,6 @@ export function useInputController(): void {
     rafRef.current = requestAnimationFrame(loop)
 
     return () => {
-      unsub()
       kb.unmount()
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     }

@@ -9,6 +9,7 @@ import { DifferentialDrive }  from '@simulation/robots/DifferentialDrive'
 import { FrankaArm }          from '@simulation/robots/FrankaArm'
 import { useRobotStore }      from '@store/robotStore'
 import { useSimulationStore } from '@store/simulationStore'
+import { metricsStore }       from '@store/metricsStore'
 import frankaConfig    from '@config/robots/franka_panda.json'
 import diffDriveConfig from '@config/robots/differential_drive.json'
 
@@ -51,10 +52,10 @@ function createEngine(): SimulationEngine {
     clock,
     [new InputSystem(), new KinematicsSystem(), new TrajectorySystem()],
     (snapshot) => {
-      // Called from useFrame (R3F's rAF) — outside React's render cycle.
-      // React 18 automatically batches these two set() calls.
       useRobotStore.getState().applySnapshot(snapshot)
-      useSimulationStore.getState().updateMetrics(snapshot.simTime, snapshot.frameTime)
+      if (useSimulationStore.getState().isRunning) {
+        metricsStore.update(snapshot.simTime, snapshot.frameTime)
+      }
     },
   )
 }

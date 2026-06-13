@@ -5,7 +5,12 @@
       "Bash(node -e \"const f = require\\('./src/config/robots/franka_panda.json'\\); console.log\\('dof:', f.dof, '| joints:', f.dhParams.length, '| limits:', f.jointLimits.length\\)\")",
       "Bash(python3 -c \"import json; f=json.load\\(open\\('src/config/robots/franka_panda.json'\\)\\); print\\('dof:', f['dof'], '| dhParams:', len\\(f['dhParams']\\), '| limits:', len\\(f['jointLimits']\\)\\)\")",
       "Bash(python3 -c ' *)",
-      "Bash(xargs cat -n)"
+      "Bash(xargs cat -n)",
+      "Bash(npx vitest *)",
+      "Bash(node -e ' *)",
+      "Bash(node /tmp/check_fk.mjs)",
+      "Bash(xargs cat)",
+      "Bash(xargs ls -la)"
     ]
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
-import { useSimulationStore } from '@store/simulationStore'
+import { metricsStore } from '@store/metricsStore'
 
 const LABEL_STYLE: React.CSSProperties = {
   color: '#555', fontSize: 10, fontFamily: 'monospace',
@@ -25,8 +25,7 @@ export function PerformanceMonitor() {
   const fpsRef   = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    return useSimulationStore.subscribe((s) => {
-      const { simTime, frameTime } = s
+    return metricsStore.subscribe((simTime, frameTime) => {
       if (simRef.current)   simRef.current.textContent   = `${simTime.toFixed(2)}s`
       if (frameRef.current) frameRef.current.textContent = `${frameTime.toFixed(1)}ms`
       const fps = frameTime > 0 ? (1000 / frameTime).toFixed(0) : '—'
