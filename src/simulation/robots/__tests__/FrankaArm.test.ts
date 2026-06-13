@@ -145,6 +145,29 @@ describe('FrankaArm', () => {
       arm.step(1)
       expect(arm.state.basePose).toEqual({ x: 0, y: 0, theta: 0 })
     })
+
+    it('endEffectorPose.quaternion is a unit quaternion after construction', () => {
+      const [x, y, z, w] = arm.state.endEffectorPose.quaternion
+      const norm = Math.sqrt(x * x + y * y + z * z + w * w)
+      expect(norm).toBeCloseTo(1, 10)
+    })
+
+    it('endEffectorPose.quaternion changes when a joint changes', () => {
+      const before = arm.state.endEffectorPose.quaternion.slice()
+      arm.applyCommand({ type: 'SET_JOINT', robotId: 'franka_panda', index: 0, angle: 1.5 })
+      arm.step(0)
+      const after = arm.state.endEffectorPose.quaternion
+      const same = before.every((v, i) => Math.abs(v - after[i]) < 1e-10)
+      expect(same).toBe(false)
+    })
+
+    it('endEffectorPose.quaternion remains unit length after joint change', () => {
+      arm.applyCommand({ type: 'SET_JOINT', robotId: 'franka_panda', index: 3, angle: -1.0 })
+      arm.step(0)
+      const [x, y, z, w] = arm.state.endEffectorPose.quaternion
+      const norm = Math.sqrt(x * x + y * y + z * z + w * w)
+      expect(norm).toBeCloseTo(1, 10)
+    })
   })
 
   // ── reset ─────────────────────────────────────────────────────────────────

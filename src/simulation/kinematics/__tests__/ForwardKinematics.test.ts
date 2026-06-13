@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { dhTransform, computeFK, mat4Multiply, mat4Position } from '../ForwardKinematics'
+import { dhTransform, computeFK, mat4Multiply, mat4Position, mat3ToQuat } from '../ForwardKinematics'
 import type { DHParam } from '../DHParameters'
 import frankaConfig from '@config/robots/franka_panda.json'
 
@@ -188,6 +188,68 @@ describe('computeFK', () => {
     // Total link lengths: 0.333+0.316+0.384+0.107 ≈ 1.14m
     expect(reach).toBeLessThan(1.2)
     expect(reach).toBeGreaterThan(0)
+  })
+})
+
+// ─── mat3ToQuat ───────────────────────────────────────────────────────────────
+
+describe('mat3ToQuat', () => {
+  const s45 = Math.sin(Math.PI / 4) // sin(45°) = cos(45°) ≈ 0.7071
+
+  it('identity matrix → [0, 0, 0, 1]', () => {
+    const I = IDENTITY as unknown as Parameters<typeof mat3ToQuat>[0]
+    const q = mat3ToQuat(I)
+    expect(q[0]).toBeCloseTo(0, 10)
+    expect(q[1]).toBeCloseTo(0, 10)
+    expect(q[2]).toBeCloseTo(0, 10)
+    expect(q[3]).toBeCloseTo(1, 10)
+  })
+
+  it('90° rotation around Z → [0, 0, sin(π/4), cos(π/4)]', () => {
+    const T = dhTransform(ZERO_PARAM, Math.PI / 2)
+    const q = mat3ToQuat(T)
+    expect(q[0]).toBeCloseTo(0, 10)
+    expect(q[1]).toBeCloseTo(0, 10)
+    expect(q[2]).toBeCloseTo(s45, 10)
+    expect(q[3]).toBeCloseTo(s45, 10)
+  })
+
+  it('90° rotation around X → [sin(π/4), 0, 0, cos(π/4)]', () => {
+    const T = dhTransform({ a: 0, d: 0, alpha: Math.PI / 2, thetaOffset: 0 }, 0)
+    const q = mat3ToQuat(T)
+    expect(q[0]).toBeCloseTo(s45, 10)
+    expect(q[1]).toBeCloseTo(0, 10)
+    expect(q[2]).toBeCloseTo(0, 10)
+    expect(q[3]).toBeCloseTo(s45, 10)
+  })
+
+  it('180° rotation around Z → [0, 0, 1, 0] (z-dominant Shepperd branch)', () => {
+    const T = dhTransform(ZERO_PARAM, Math.PI)
+    const q = mat3ToQuat(T)
+    expect(q[0]).toBeCloseTo(0, 10)
+    expect(q[1]).toBeCloseTo(0, 10)
+    expect(Math.abs(q[2])).toBeCloseTo(1, 10)
+    expect(q[3]).toBeCloseTo(0, 10)
+  })
+
+  it('output is always a unit quaternion (norm = 1)', () => {
+    const angles = [0, Math.PI / 6, Math.PI / 3, Math.PI / 2, Math.PI]
+    for (const theta of angles) {
+      const T = dhTransform({ a: 0.3, d: 0.2, alpha: 1.1, thetaOffset: 0 }, theta)
+      const [x, y, z, w] = mat3ToQuat(T)
+      const norm = Math.sqrt(x * x + y * y + z * z + w * w)
+      expect(norm).toBeCloseTo(1, 10)
+    }
+  })
+
+  it('round-trips with FK: quaternion changes when joint angle changes', () => {
+    const params: DHParam[] = [{ a: 0, d: 0.1, alpha: Math.PI / 2, thetaOffset: 0 }]
+    const [T0] = computeFK(params, [0])
+    const [T1] = computeFK(params, [Math.PI / 2])
+    const q0 = mat3ToQuat(T0!)
+    const q1 = mat3ToQuat(T1!)
+    const same = q0.every((v, i) => Math.abs(v - q1[i]) < 1e-10)
+    expect(same).toBe(false)
   })
 })
 

@@ -2,7 +2,7 @@ import type { Command } from '../types/Command'
 import type { Pose3D, RobotState } from '../types/RobotState'
 import type { Robot } from './Robot'
 import type { DHParam } from '../kinematics/DHParameters'
-import { computeFK, mat4Position } from '../kinematics/ForwardKinematics'
+import { computeFK, mat4Position, mat3ToQuat } from '../kinematics/ForwardKinematics'
 
 export interface FrankaArmConfig {
   readonly id: string
@@ -33,7 +33,7 @@ export class FrankaArm implements Robot {
       id: this.cfg.id,
       jointStates: this._angles.map((angle) => ({ angle, velocity: 0, torque: 0 })),
       basePose: { x: 0, y: 0, theta: 0 },
-      endEffectorPose: { position: pos, quaternion: [0, 0, 0, 1] },
+      endEffectorPose: { position: pos, quaternion: eeTransform ? mat3ToQuat(eeTransform) : [0, 0, 0, 1] },
       dhTransforms: transforms,
     }
   }
