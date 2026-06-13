@@ -29,6 +29,7 @@ export class SimulationEngine {
     this.onSnapshot({
       simTime: this.clock.simTime,
       frameTime,
+      wallDeltaSec: rawDelta ?? this.clock.fixedDt,
       robots: this.world.getRobotSnapshots(),
       trajectories: this.world.getTrajectories(),
     })

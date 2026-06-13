@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { mapInputToCommands } from '../InputMapper'
 import type { RawInput } from '../KeyboardController'
+import diffDriveConfig from '@config/robots/differential_drive.json'
 
 const OFF: RawInput = { forward: false, backward: false, left: false, right: false }
 
-const LINEAR_SPEED  = 1.5 // must match InputMapper.ts constant
-const ANGULAR_SPEED = 2.0 // must match InputMapper.ts constant
+const LINEAR_SPEED  = diffDriveConfig.maxLinearVel
+const ANGULAR_SPEED = diffDriveConfig.maxAngularVel
 
 describe('mapInputToCommands', () => {
   // ── no movement ──────────────────────────────────────────────────────────

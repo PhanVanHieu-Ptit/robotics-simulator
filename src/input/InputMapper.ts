@@ -1,8 +1,9 @@
 import type { RawInput } from './KeyboardController'
 import type { Command } from '@simulation/types'
+import diffDriveConfig from '@config/robots/differential_drive.json'
 
-const LINEAR_SPEED  = 1.5 // m/s
-const ANGULAR_SPEED = 2.0 // rad/s
+const LINEAR_SPEED  = diffDriveConfig.maxLinearVel
+const ANGULAR_SPEED = diffDriveConfig.maxAngularVel
 
 export function mapInputToCommands(input: Readonly<RawInput>): Command[] {
   const linear =
