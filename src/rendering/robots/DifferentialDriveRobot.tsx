@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type { Group } from 'three'
 import { useRobotStore } from '@store/robotStore'
+import { DIFF_DRIVE_ID } from '@config/robotIds'
 
 const CHASSIS_W = 0.5
 const CHASSIS_H = 0.15
@@ -25,7 +26,7 @@ export function DiffDriveRobot() {
       groupRef.current.rotation.y = -theta
     }
 
-    const snap = store.robotSnapshots['diff_drive']
+    const snap = store.robotSnapshots[DIFF_DRIVE_ID]
     const leftAngle  = snap?.jointStates[0]?.angle ?? 0
     const rightAngle = snap?.jointStates[1]?.angle ?? 0
 

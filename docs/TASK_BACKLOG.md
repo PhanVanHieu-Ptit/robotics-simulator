@@ -21,9 +21,7 @@ _No active blockers._ All P0 items completed on branch `update-frank-arm-mesh`.
 
 ## P1 — High Value
 
-| ID | Task | Key Files | Notes |
-|----|------|-----------|-------|
-| T-015 | Add schema validation for robot JSON configs | `src/config/robots/*.json`, `src/simulation/robots/FrankaArm.ts` | D5: no boundary validation at JSON parse time |
+_No active P1 items._
 
 ---
 
@@ -32,6 +30,7 @@ _No active blockers._ All P0 items completed on branch `update-frank-arm-mesh`.
 | ID | Task | Key Files | Notes |
 |----|------|-----------|-------|
 | T-009 | Implement Gamepad input | `src/input/GamepadController.ts` | Stub; use `navigator.getGamepads()` |
+| T-020 | Finish PERF-3: mutate FK transforms in-place | `src/simulation/kinematics/ForwardKinematics.ts`, `src/simulation/robots/FrankaArm.ts` | `_jointStatesCache` done (2026-06-14); remaining: pre-allocate Mat4 array in computeFK |
 | T-010 | Derive visual link lengths from DH params | `src/rendering/robots/FrankaArm.tsx` (LINK_LENGTHS const) | INC-1: hardcoded values; low priority now GLB is primary renderer |
 | T-016 | Implement `CollisionSystem` (BVH broadphase) | `src/simulation/systems/CollisionSystem.ts`, `src/simulation/world/Obstacle.ts` | Consider `@react-three/rapier` for physics |
 
@@ -63,6 +62,9 @@ _No active blockers._ All P0 items completed on branch `update-frank-arm-mesh`.
 | T-012 | Read speeds from robot config in `InputMapper` | 2026-06-13 | `InputMapper.ts` imports `diffDriveConfig`; tests updated to match |
 | T-013 | Remove React subscriptions from `DiffDriveRobot` (PERF-2) | 2026-06-13 | `DifferentialDriveRobot.tsx` already uses `useFrame` + `getState()` — zero re-renders |
 | T-014 | Wire `EventBus` into `SimulationEngine` | 2026-06-14 | branch update-frank-arm-mesh — `SimulationEngine` accepts optional `bus`; emits `tick` + `reset`; `getEventBus()` exported from `useSimulation.ts` |
+| T-015 | Add schema validation for robot JSON configs | 2026-06-14 | `src/config/validateRobotConfig.ts` — `validateFrankaConfig` + `validateDiffDriveConfig`; 27 new tests; wired into `useSimulation.ts` |
+| SCALE-2 | Export robot ID constants, remove magic strings | 2026-06-14 | `src/config/robotIds.ts` — `FRANKA_ID`, `DIFF_DRIVE_ID` sourced from JSON; updated robotStore, ManipulatorControls, TelemetryPanel, SceneRoot, DifferentialDriveRobot |
+| PERF-3a | Pre-allocate `_jointStatesCache` in `FrankaArm` | 2026-06-14 | `FrankaArm.ts` — reuses same array each tick; saves 8 allocs/tick (1 array + 7 JointState objects) |
 | T-021 | Wire `RobotLoader` into `SceneRoot` for `ridgeback_franka` | 2026-06-14 | branch update-frank-arm-mesh — `MovingRobot` component in `SceneRoot.tsx`; GLB loaded, hierarchy traversed, joints registered; `ManipulatorSystem` + `ForwardKinematicsSystem` drive the arm |
 | INC-2 | `IKCommand` type exists but is never handled | 2026-06-14 | branch update-frank-arm-mesh — `FrankaArm.applyCommand()` now handles `SET_IK_TARGET`; `InputSystem` routes it via `robotId` dispatch |
 | INC-3 | Fix `DifferentialDrive.dhTransforms` returning identity | 2026-06-13 | `DifferentialDrive.ts` — `buildState()` computes 4×4 world transform from basePose; 3 new tests |

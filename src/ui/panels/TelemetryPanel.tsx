@@ -1,10 +1,12 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { Typography } from 'antd'
 import { useRobotStore } from '@store/robotStore'
+import { DIFF_DRIVE_ID } from '@config/robotIds'
+import diffDriveConfig from '@config/robots/differential_drive.json'
 
 const { Title } = Typography
 
-const WHEEL_BASE = 0.5 // metres — matches differential_drive.json
+const WHEEL_BASE = diffDriveConfig.wheelBase
 
 const CARD_STYLE: React.CSSProperties = {
   background: '#1a1a2e',
@@ -53,8 +55,8 @@ export function TelemetryPanel() {
       if (yRef.current)     yRef.current.textContent     = y.toFixed(3)
       if (thetaRef.current) thetaRef.current.textContent = ((theta * 180) / Math.PI).toFixed(2)
 
-      const leftVel  = s.robotSnapshots['diff_drive']?.jointStates[0]?.velocity ?? 0
-      const rightVel = s.robotSnapshots['diff_drive']?.jointStates[1]?.velocity ?? 0
+      const leftVel  = s.robotSnapshots[DIFF_DRIVE_ID]?.jointStates[0]?.velocity ?? 0
+      const rightVel = s.robotSnapshots[DIFF_DRIVE_ID]?.jointStates[1]?.velocity ?? 0
       const v     = (leftVel + rightVel) / 2
       const omega = (rightVel - leftVel) / WHEEL_BASE
       if (vRef.current)     vRef.current.textContent     = v.toFixed(3)
