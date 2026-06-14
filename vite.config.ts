@@ -6,6 +6,25 @@ import type { Plugin } from 'vitest/config'
 export default defineConfig({
   plugins: [react() as unknown as Plugin],
 
+  server: {
+    headers: {
+      // Permissive-but-explicit CSP for the dev server.
+      // 'unsafe-inline' is required by R3F/Three.js shader compilation and
+      // Vite's HMR injected scripts. 'blob:' is needed for Web Workers.
+      // Tighten for production by removing 'unsafe-inline' once a nonce strategy is adopted.
+      'Content-Security-Policy': [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "worker-src blob:",
+        "connect-src 'self' ws://localhost:*",
+      ].join('; '),
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+    },
+  },
+
   resolve: {
     alias: {
       '@':            path.resolve(__dirname, './src'),
@@ -24,6 +43,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    exclude: ['node_modules/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -62,7 +62,7 @@
 import * as THREE from 'three'
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import { getNodeMap } from './ManipulatorSystem'
+import { getNodeMap } from '@rendering/utils/nodeRegistry'
 import type { HierarchyNode } from '@rendering/utils/traverseHierarchy'
 
 // ─── End-Effector Node Registration ────────────────────────────────────────

@@ -1,8 +1,14 @@
 import type { Command } from '../types/Command'
-import type { Pose3D, RobotState } from '../types/RobotState'
+import type { Mat4, Pose3D, RobotState } from '../types/RobotState'
 import type { Robot } from './Robot'
 import type { DHParam } from '../kinematics/DHParameters'
-import { computeFK, mat4Position, mat3ToQuat } from '../kinematics/ForwardKinematics'
+import {
+  computeFKInto,
+  mat4Position,
+  mat3ToQuat,
+  newMutableMat4,
+  type MutableMat4,
+} from '../kinematics/ForwardKinematics'
 import { solveIK } from '../kinematics/InverseKinematics'
 
 export interface FrankaArmConfig {
@@ -21,11 +27,18 @@ export class FrankaArm implements Robot {
   private _ikTarget: Pose3D | null = null
   // Pre-allocated to avoid 8 object creations (1 array + 7 objects) per tick.
   private readonly _jointStatesCache: { angle: number; velocity: number; torque: number }[]
+  // Pre-allocated FK buffers — eliminates all Mat4 allocations during buildState().
+  private readonly _fkTransformsCache: MutableMat4[]
+  private readonly _fkAccBuf: MutableMat4
+  private readonly _fkLocalBuf: MutableMat4
 
   constructor(private readonly cfg: FrankaArmConfig) {
     this.id      = cfg.id
     this._angles = [...cfg.initialAngles]
     this._jointStatesCache = cfg.initialAngles.map((angle) => ({ angle, velocity: 0, torque: 0 }))
+    this._fkTransformsCache = cfg.dhParams.map(() => newMutableMat4())
+    this._fkAccBuf   = newMutableMat4()
+    this._fkLocalBuf = newMutableMat4()
     this.state   = this.buildState()
   }
 
@@ -34,8 +47,8 @@ export class FrankaArm implements Robot {
       this._jointStatesCache[i]!.angle = this._angles[i]!
     }
 
-    const transforms = computeFK(this.cfg.dhParams, this._angles)
-    const eeTransform = transforms[transforms.length - 1]
+    computeFKInto(this.cfg.dhParams, this._angles, this._fkTransformsCache, this._fkAccBuf, this._fkLocalBuf)
+    const eeTransform = this._fkTransformsCache[this._fkTransformsCache.length - 1]
     const pos = eeTransform ? mat4Position(eeTransform) : ([0, 0, 0] as const)
 
     return {
@@ -43,7 +56,9 @@ export class FrankaArm implements Robot {
       jointStates: this._jointStatesCache,
       basePose: { x: 0, y: 0, theta: 0 },
       endEffectorPose: { position: pos, quaternion: eeTransform ? mat3ToQuat(eeTransform) : [0, 0, 0, 1] },
-      dhTransforms: transforms,
+      // Expose as readonly Mat4[]; store consumers must slice() before storing
+      // if they need a stable reference across ticks.
+      dhTransforms: this._fkTransformsCache as unknown as readonly Mat4[],
     }
   }
 

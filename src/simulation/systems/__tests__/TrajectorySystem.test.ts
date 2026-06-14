@@ -84,7 +84,7 @@ describe('TrajectorySystem deadband filtering', () => {
     expect(sys.getBuffer('r1')?.count).toBe(1)
   })
 
-  it('robot.trajectoryBuffer matches internal ring buffer after each push', () => {
+  it('getTrajectorySnapshot matches internal ring buffer after each push', () => {
     const robot = makeMockRobot('r1', [0, 0, 0])
     const world = makeWorld(robot)
     const sys = new TrajectorySystem()
@@ -94,9 +94,11 @@ describe('TrajectorySystem deadband filtering', () => {
     sys.tick(world, 1 / 60)
 
     const buf = sys.getBuffer('r1')!
-    expect(robot.trajectoryBuffer).toHaveLength(buf.count)
+    const snapshot = sys.getTrajectorySnapshot()
+    const traj = snapshot['r1']!
+    expect(traj).toHaveLength(buf.count)
     for (let i = 0; i < buf.count; i++) {
-      expect(robot.trajectoryBuffer[i]).toBe(buf.at(i))
+      expect(traj[i]).toEqual(buf.at(i))
     }
   })
 })

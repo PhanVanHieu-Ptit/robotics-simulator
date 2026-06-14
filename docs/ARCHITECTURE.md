@@ -1,5 +1,17 @@
 # ARCHITECTURE.md
 
+## Layer rules (enforced by convention)
+
+| Layer | May import | Must NOT import |
+|---|---|---|
+| `src/simulation/` | Other `src/simulation/`, `src/config/` | React, Three.js, Zustand, browser APIs |
+| `src/rendering/` | `src/simulation/`, `src/store/`, `src/config/`, Three.js, R3F | `src/ui/` internals |
+| `src/store/` | `src/simulation/types` (type-only), `src/config/` | React components, Three.js |
+| `src/ui/` | `src/store/`, `src/simulation/types` (type-only), `src/config/`, `src/rendering/utils/` | R3F hooks |
+| `src/input/` | `src/simulation/types`, `src/config/` | React, Three.js |
+
+> Candidate tool to enforce statically: `eslint-plugin-boundaries`.
+
 ## Core Design
 
 The codebase enforces a strict unidirectional data flow:
@@ -139,11 +151,39 @@ The nested `<Suspense>` overrides the outer `fallback={null}` in `Scene.tsx` for
 ```
 useSimulation()          → controls engine lifecycle (start/pause/stop/step)
 useRobotCommands()       → dispatch(cmd) → engine.world.enqueueCommand(cmd)
-useSimulationFrame()     → drives engine.tick() from R3F's rAF
-useInputController()     → maps keyboard state → commands via own RAF loop
+useSimulationFrame()     → composes the three frame hooks below (single export)
+  useInputSampler()      → samples keyboard/gamepad, enqueues DRIVE commands
+  useEngineFrame()       → advances engine.tick(delta) when running & unpaused
+  useSimToGLBBridge()    → copies robotStore.jointAngles → manipulatorStore
+useInputController()     → mounts/unmounts KeyboardController + GamepadController
 ```
 
 `useRobotCommands` deliberately does not call `useSimulation()`. It accesses `getEngine()` directly to avoid any store subscription.
+
+---
+
+## Module singletons (known constraints)
+
+| Singleton | File | Notes |
+|---|---|---|
+| `_engine` | `src/hooks/useSimulation.ts` | One simulation world per app lifetime (SCALE-1). |
+| `_bus` | `src/hooks/useSimulation.ts` | Global event bus; access via `getEventBus()`. |
+| `_kb`, `_gp` | `src/input/inputControllerSingleton.ts` | Set by `useInputController` on mount. |
+| `nodeMap` | `src/rendering/utils/nodeRegistry.ts` | Three.js node refs; cleared on each GLB load. |
+
+---
+
+## FK duality
+
+Two FK paths run concurrently:
+
+| Path | File | Output | Used for |
+|---|---|---|---|
+| DH FK (`computeFKInto`) | `FrankaArm.buildState()` | `robotStore.jointAngles`, `robotStore.endEffectorPose` | IK planning, store state |
+| Three.js hierarchy FK | `ForwardKinematicsSystem.computeFK()` | `useFKStore.pose` | Sidebar display, EE frame overlay |
+
+The Three.js path is visually ground-truth. The DH path is authoritative for IK.
+Consumers needing the most accurate visual EE pose should prefer `useFKStore`.
 
 ---
 
