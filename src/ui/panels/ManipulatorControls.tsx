@@ -4,6 +4,7 @@ import { Slider, Typography, Button, Empty, Divider } from 'antd'
 import { applyAngles, useManipulatorStore } from '@simulation/systems/ManipulatorSystem'
 import { useFKStore, type EEPose } from '@simulation/systems/ForwardKinematicsSystem'
 import { getEngine } from '@hooks/useSimulation'
+import { FRANKA_ID } from '@config/robotIds'
 
 const { Title, Text } = Typography
 
@@ -139,7 +140,7 @@ export function ManipulatorControls() {
                   // Route through simulation so IK and FK stay in sync.
                   getEngine()?.world.enqueueCommand({
                     type: 'SET_JOINT',
-                    robotId: 'franka_panda',
+                    robotId: FRANKA_ID,
                     index: dhIndex,
                     angle,
                   })

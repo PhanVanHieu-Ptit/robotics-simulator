@@ -14,6 +14,7 @@ import { useSimulationStore } from '@store/simulationStore'
 import { metricsStore }       from '@store/metricsStore'
 import frankaConfig    from '@config/robots/franka_panda.json'
 import diffDriveConfig from '@config/robots/differential_drive.json'
+import { validateFrankaConfig, validateDiffDriveConfig } from '@config/validateRobotConfig'
 
 // ---------------------------------------------------------------------------
 // Module-level singletons — one engine and one event bus for the app lifetime.
@@ -35,24 +36,8 @@ function createEngine(): SimulationEngine {
   const world = new SimulationWorld()
   const clock = new SimulationClock()
 
-  world.addRobot(
-    new FrankaArm({
-      id: frankaConfig.id,
-      dhParams: frankaConfig.dhParams,
-      jointLimits: frankaConfig.jointLimits,
-      initialAngles: frankaConfig.initialAngles,
-    }),
-  )
-
-  world.addRobot(
-    new DifferentialDrive({
-      id: diffDriveConfig.id,
-      wheelBase: diffDriveConfig.wheelBase,
-      wheelRadius: diffDriveConfig.wheelRadius,
-      maxLinearVel: diffDriveConfig.maxLinearVel,
-      maxAngularVel: diffDriveConfig.maxAngularVel,
-    }),
-  )
+  world.addRobot(new FrankaArm(validateFrankaConfig(frankaConfig)))
+  world.addRobot(new DifferentialDrive(validateDiffDriveConfig(diffDriveConfig)))
 
   return new SimulationEngine(
     world,

@@ -6,7 +6,7 @@
 
 A browser-based 3D robotics simulator built with React 18 + TypeScript + Three.js (@react-three/fiber). It visualizes two robots — a 7-DOF Franka Panda arm and a differential-drive mobile base — in real time. Forward kinematics, inverse kinematics, trajectory recording, and keyboard/UI control work. Collision detection and path planning are **stubbed but not implemented**.
 
-## Current State (as of 2026-06-14)
+## Current State (as of 2026-06-14, iteration 2)
 
 | Area | Status |
 |------|--------|
@@ -24,7 +24,8 @@ A browser-based 3D robotics simulator built with React 18 + TypeScript + Three.j
 | Collision Detection | **Stub — no-op system** |
 | Path Planning | **Stub — no-op system** |
 | Gamepad Input | **Stub — no-op controller** |
-| Tests | 230 passing — IK (8), FK (28), DiffDrive (23), FrankaArm (25), integration (39), systems, stores |
+| Config Validation | Working — `validateFrankaConfig` + `validateDiffDriveConfig` throw on malformed JSON |
+| Tests | 257 passing — IK (8), FK (28), DiffDrive (23), FrankaArm (25), integration (39), systems, stores, validation (27) |
 
 ## Key Invariants Every Agent Must Know
 
@@ -43,4 +44,4 @@ See [README.md](README.md) for the authoritative pre-task reading list.
 
 - No P0 blockers.
 - Visual link lengths hardcoded separately from DH params (INC-1, T-010) — low priority, GLB is now primary renderer
-- Robot JSON configs have no schema validation at parse time (T-015)
+- PERF-3 partially fixed: `_jointStatesCache` pre-allocated; `computeFK()` Mat4 array still allocates each tick (T-020)

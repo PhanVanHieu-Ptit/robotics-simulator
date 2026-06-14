@@ -11,6 +11,7 @@ import { CoordinateFrames } from '../overlays/CoordinateFrame'
 import { EndEffectorFrame } from '../overlays/EndEffectorFrame'
 import { useSimulationFrame } from '../hooks/useSimulationFrame'
 import { useRobotStore } from '@store/robotStore'
+import { FRANKA_ID } from '@config/robotIds'
 import { useRendererStore } from '@store/rendererStore'
 import { useModelInspectorStore } from '@store/modelInspectorStore'
 import { traverseHierarchy } from '../utils/traverseHierarchy'
@@ -92,7 +93,7 @@ export function SceneRoot() {
       <EndEffectorFrame />
       <Environment />
       <MovingRobot />
-      <Trail robotId="franka_panda" />
+      <Trail robotId={FRANKA_ID} />
       <CoordinateFrames />
     </Scene>
   )

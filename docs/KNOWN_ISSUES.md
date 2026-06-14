@@ -44,14 +44,14 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ---
 
-### PERF-3: `FrankaArm.buildState()` allocates new arrays on every physics tick
+### PERF-3: `FrankaArm.buildState()` allocates new arrays on every physics tick (partially fixed)
 
 **File**: [src/simulation/robots/FrankaArm.ts](src/simulation/robots/FrankaArm.ts) — `step()`
-**Severity**: Medium
+**Severity**: Medium → Low
 
-`buildState()` → `computeFK()` allocates a fresh `Mat4[]` and `RobotState` on every call at 60 Hz. At 7 joints this is ~8 object allocations per tick.
+`_jointStatesCache` is now pre-allocated in the constructor and mutated in-place each tick, saving 8 allocations/tick (1 `JointState[]` + 7 `JointState` objects). Remaining allocation source: `computeFK()` still creates a fresh `Mat4[]` and 7 `Mat4` tuples each call.
 
-**Fix**: Pre-allocate the transforms array and mutate in-place. Requires changing `Mat4` from `readonly` tuple to a mutable typed array, or using a pool.
+**Remaining fix (T-020)**: Add a `computeFKInto(dhParams, angles, out: Mat4[]): void` variant that mutates pre-allocated output entries in-place, eliminating the remaining ~8 FK allocations per tick.
 
 ---
 
@@ -94,14 +94,9 @@ Two independent `requestAnimationFrame` loops run simultaneously. The input loop
 
 ---
 
-### SCALE-2: Hard-coded robot IDs in store and rendering
+### ~~SCALE-2: Hard-coded robot IDs in store and rendering~~ FIXED
 
-**Files**: [src/store/robotStore.ts](src/store/robotStore.ts) L30-31, [src/rendering/robots/DifferentialDriveRobot.tsx](src/rendering/robots/DifferentialDriveRobot.tsx) L5
-**Severity**: Medium
-
-`snapshot.robots['franka_panda']` and `snapshot.robots['diff_drive']` are string literals. Adding a third robot requires hunting and updating multiple files.
-
-**Fix**: Export robot ID constants from each JSON config and import them; or make `robotStore` generic over robot IDs discovered from the world snapshot.
+`src/config/robotIds.ts` exports `FRANKA_ID` and `DIFF_DRIVE_ID`, both sourced directly from the JSON config files. All production consumers (robotStore, ManipulatorControls, TelemetryPanel, SceneRoot, DifferentialDriveRobot) now import these constants — no more magic string literals.
 
 ---
 

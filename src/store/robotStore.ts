@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { Mat4, Pose2D, Pose3D, RobotState } from '@simulation/types'
 import type { WorldSnapshot } from '@simulation/types'
+import { FRANKA_ID, DIFF_DRIVE_ID } from '@config/robotIds'
 
 interface RobotState_ {
   // Franka Panda
@@ -36,8 +37,8 @@ export const useRobotStore = create<RobotState_ & RobotActions>()(
     robotSnapshots: {},
 
     applySnapshot: (snapshot) => {
-      const franka = snapshot.robots['franka_panda']
-      const diffDrive = snapshot.robots['diff_drive']
+      const franka = snapshot.robots[FRANKA_ID]
+      const diffDrive = snapshot.robots[DIFF_DRIVE_ID]
 
       set({
         robotSnapshots: snapshot.robots,
