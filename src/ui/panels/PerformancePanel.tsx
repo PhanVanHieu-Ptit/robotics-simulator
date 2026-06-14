@@ -20,7 +20,7 @@ function Metric({
   valueRef,
 }: {
   label: string
-  valueRef: RefObject<HTMLSpanElement | null>
+  valueRef: RefObject<HTMLSpanElement>
 }) {
   return (
     <div style={CARD_STYLE}>

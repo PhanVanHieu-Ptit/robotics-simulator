@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import { Slider, Typography, Button, Empty, Divider } from 'antd'
 import { applyAngles, useManipulatorStore } from '@simulation/systems/ManipulatorSystem'
 import { useFKStore, type EEPose } from '@simulation/systems/ForwardKinematicsSystem'
+import { getEngine } from '@hooks/useSimulation'
 
 const { Title, Text } = Typography
 
@@ -94,6 +95,7 @@ export function ManipulatorRenderer() {
 export function ManipulatorControls() {
   const joints = useManipulatorStore((s) => s.joints)
   const angles = useManipulatorStore((s) => s.angles)
+  const armJointIndexByUuid = useManipulatorStore((s) => s.armJointIndexByUuid)
   const { setAngle, resetAngles } = useManipulatorStore.getState()
 
   if (joints.length === 0) {
@@ -115,6 +117,8 @@ export function ManipulatorControls() {
       {joints.map((joint) => {
         const angleRad = angles[joint.uuid] ?? 0
         const angleDeg = (angleRad * 180) / Math.PI
+        const dhIndex = armJointIndexByUuid.get(joint.uuid)
+        const isArmJoint = dhIndex !== undefined
 
         return (
           <div key={joint.uuid} style={{ marginBottom: 12 }}>
@@ -129,7 +133,22 @@ export function ManipulatorControls() {
               max={180}
               step={0.5}
               value={angleDeg}
-              onChange={(deg: number) => setAngle(joint.uuid, (deg * Math.PI) / 180)}
+              onChange={(deg: number) => {
+                const angle = (deg * Math.PI) / 180
+                if (isArmJoint) {
+                  // Route through simulation so IK and FK stay in sync.
+                  getEngine()?.world.enqueueCommand({
+                    type: 'SET_JOINT',
+                    robotId: 'franka_panda',
+                    index: dhIndex,
+                    angle,
+                  })
+                }
+                // Always update ManipulatorStore directly for immediate visual
+                // response. In play mode the bridge will write the same value
+                // once the engine processes the command — no conflict.
+                setAngle(joint.uuid, angle)
+              }}
               tooltip={{ formatter: (v) => `${(v ?? 0).toFixed(1)}°` }}
             />
           </div>

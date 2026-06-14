@@ -10,7 +10,15 @@
       "Bash(node -e ' *)",
       "Bash(node /tmp/check_fk.mjs)",
       "Bash(xargs cat)",
-      "Bash(xargs ls -la)"
+      "Bash(xargs ls -la)",
+      "Bash(xargs ls)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:d[k] for k in ['dependencies','devDependencies'] if k in d}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('exports',{}\\).get\\('./config',{}\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('typesVersions', d.get\\('types', d.get\\('main', 'not found'\\)\\)\\)\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/vitest/package.json'\\).version\\)\")",
+      "Bash(node -e \"const pkg = require\\('./node_modules/vitest/package.json'\\); console.log\\(JSON.stringify\\(pkg.exports?.['.']\\), JSON.stringify\\(pkg.types\\), JSON.stringify\\(pkg.typings\\)\\)\")",
+      "Bash(node -e \"const pkg = require\\('./node_modules/@react-three/fiber/package.json'\\); console.log\\(JSON.stringify\\(pkg.exports?.['.'], null, 2\\)\\)\")",
+      "Bash(node -e \"const pkg = require\\('./node_modules/@react-three/fiber/package.json'\\); console.log\\(pkg.main, pkg.module, pkg.types, pkg.typings\\)\")"
     ]
   }
 }

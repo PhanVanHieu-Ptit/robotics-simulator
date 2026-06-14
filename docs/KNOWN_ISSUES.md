@@ -6,14 +6,9 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ## Bugs
 
-### BUG-1: End-effector quaternion is always identity
+### ~~BUG-1: End-effector quaternion is always identity~~ FIXED
 
-**File**: [src/simulation/robots/FrankaArm.ts](src/simulation/robots/FrankaArm.ts) — `buildState()`
-**Severity**: Medium
-
-`endEffectorPose.quaternion` is hardcoded to `[0, 0, 0, 1]`. FK correctly computes the full 4×4 rotation matrix for each frame, but the orientation is never extracted from it. IK targets that use orientation will fail silently.
-
-**Fix**: Extract the 3×3 rotation block from the final DH transform and convert it to a quaternion. A standard `mat3ToQuat()` utility is needed.
+`mat3ToQuat()` (Shepperd's method) is now exported from `ForwardKinematics.ts` and wired into `FrankaArm.buildState()`. The quaternion is extracted from the 3×3 rotation block of the final DH transform each tick.
 
 ---
 
@@ -23,14 +18,9 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ---
 
-### BUG-3: `InputSystem` broadcasts `DRIVE` commands to all robots
+### ~~BUG-3: `InputSystem` broadcasts `DRIVE` commands to all robots~~ FIXED
 
-**File**: [src/simulation/systems/InputSystem.ts](src/simulation/systems/InputSystem.ts) — `tick()`
-**Severity**: Low (no second robot responds, but will break when one is added)
-
-`DRIVE` commands have no `robotId`. `InputSystem` sends them to every robot in the world. `FrankaArm.applyCommand()` silently ignores them (type guard), but this is fragile. If a future robot accepts `DRIVE`, it will be controlled unintentionally.
-
-**Fix**: Add `robotId` to `DriveCommand` or filter by robot type in `InputSystem`.
+`DriveCommand` now has an optional `robotId?: string` field. When set, `InputSystem` routes the command only to that robot. When omitted (keyboard control), it broadcasts to all robots — preserving existing behavior. 3 new integration tests verify targeted vs. broadcast dispatch.
 
 ---
 
@@ -71,14 +61,9 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ---
 
-### PERF-5: `PerformanceMonitor` re-renders every physics tick
+### ~~PERF-5: `PerformanceMonitor` re-renders every physics tick~~ FIXED
 
-**File**: [src/ui/panels/PerformanceMonitor.tsx](src/ui/panels/PerformanceMonitor.tsx)
-**Severity**: Low
-
-Subscribes to `simTime` (updated 60×/sec) and `frameTime`. This is a React component so it triggers a full DOM reconciliation every tick.
-
-**Fix**: Debounce the store update to ~10 Hz for display purposes, or use a `ref` + direct DOM mutation for the metric values.
+`PerformanceMonitor` subscribes to `metricsStore` (a plain JS pub-sub, not Zustand) and writes directly to DOM `ref`s. Zero React re-renders while the simulation runs.
 
 ---
 
@@ -131,14 +116,9 @@ Two independent `requestAnimationFrame` loops run simultaneously. The input loop
 
 ---
 
-### SCALE-4: `EventBus` is defined but completely disconnected
+### ~~SCALE-4: `EventBus` is defined but completely disconnected~~ FIXED
 
-**File**: [src/simulation/core/EventBus.ts](src/simulation/core/EventBus.ts)
-**Severity**: Low (current) / High (future)
-
-`SimulationEvents` defines `tick`, `collision`, `trajectoryUpdated`, and `reset` but the `EventBus` class is never instantiated. `SimulationEngine` does not hold or emit to any bus. Collision detection and trajectory events have no emission path.
-
-**Fix**: Inject `EventBus<SimulationEvents>` into `SimulationEngine` constructor and emit in `tick()` and on system events.
+`SimulationEngine` now accepts an optional `bus?: EventBus<SimulationEvents>` parameter and emits `tick` and `reset` events. A module-level `_bus` is created in `useSimulation.ts` and injected at engine creation. Consumers call `getEventBus()` to subscribe. `collision` and `trajectoryUpdated` events remain unimplemented until those systems are built.
 
 ---
 
@@ -158,13 +138,9 @@ These are manually entered and partially match the DH `d` parameters in `franka_
 
 ---
 
-### INC-2: `IKCommand` type exists but is never handled
+### ~~INC-2: `IKCommand` type exists but is never handled~~ FIXED
 
-**File**: [src/simulation/types/Command.ts](src/simulation/types/Command.ts), [src/simulation/systems/InputSystem.ts](src/simulation/systems/InputSystem.ts)
-
-`IKCommand` is in the `Command` union. `InputSystem.tick()` has no branch for `'SET_IK_TARGET'`. It falls through silently (the `'robotId' in cmd` branch catches it but passes to a robot that ignores it).
-
-**Fix**: Either remove `IKCommand` from the union until IK is implemented, or add an explicit handler that invokes the (future) IK system.
+`FrankaArm.applyCommand()` now handles `SET_IK_TARGET` by storing the target in `_ikTarget`. `step()` calls `solveIK()` when `_ikTarget !== null`, then clears it so IK runs at most once per command. `InputSystem` routes it via the existing `'robotId' in cmd` branch — no changes needed there.
 
 ---
 

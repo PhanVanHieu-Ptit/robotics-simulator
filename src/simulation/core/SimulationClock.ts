@@ -2,7 +2,7 @@ import { SimulationConfig } from '@config/simulation'
 
 export class SimulationClock {
   private _simTime = 0
-  private _speedMultiplier = SimulationConfig.defaultSpeed
+  private _speedMultiplier: number = SimulationConfig.defaultSpeed
 
   get simTime(): number {
     return this._simTime

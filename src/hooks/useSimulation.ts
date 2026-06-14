@@ -2,6 +2,8 @@ import { useCallback } from 'react'
 import { SimulationEngine } from '@simulation/core/SimulationEngine'
 import { SimulationClock }  from '@simulation/core/SimulationClock'
 import { SimulationWorld }  from '@simulation/world/SimulationWorld'
+import { EventBus }         from '@simulation/core/EventBus'
+import type { SimulationEvents } from '@simulation/core/EventBus'
 import { InputSystem }      from '@simulation/systems/InputSystem'
 import { KinematicsSystem } from '@simulation/systems/KinematicsSystem'
 import { TrajectorySystem } from '@simulation/systems/TrajectorySystem'
@@ -14,14 +16,19 @@ import frankaConfig    from '@config/robots/franka_panda.json'
 import diffDriveConfig from '@config/robots/differential_drive.json'
 
 // ---------------------------------------------------------------------------
-// Module-level singleton — one engine for the entire app lifetime.
-// Exposed via getEngine() so other hooks can access it without subscribing
-// to the Zustand store (and without causing React re-renders).
+// Module-level singletons — one engine and one event bus for the app lifetime.
+// Exposed via getEngine() / getEventBus() so other modules can subscribe to
+// simulation events without causing React re-renders.
 // ---------------------------------------------------------------------------
 let _engine: SimulationEngine | null = null
+const _bus = new EventBus<SimulationEvents>()
 
 export function getEngine(): SimulationEngine | null {
   return _engine
+}
+
+export function getEventBus(): EventBus<SimulationEvents> {
+  return _bus
 }
 
 function createEngine(): SimulationEngine {
@@ -57,6 +64,7 @@ function createEngine(): SimulationEngine {
         metricsStore.update(snapshot.simTime, snapshot.frameTime, snapshot.wallDeltaSec)
       }
     },
+    _bus,
   )
 }
 

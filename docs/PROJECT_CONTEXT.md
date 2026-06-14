@@ -59,18 +59,21 @@ src/
 
 | Feature | Status |
 |---|---|
-| Forward kinematics (Franka) | Working |
+| Forward kinematics (Franka, DH) | Working |
+| FK via GLB hierarchy (Three.js) | Working — `ForwardKinematicsSystem`, EE pose at ~10 Hz to sidebar |
 | Base kinematics (DiffDrive) | Working |
 | Keyboard drive input | Working |
-| Joint slider control | Working |
-| Trajectory visualization | Working |
+| Joint slider control (GLB joints) | Working — `ManipulatorControls` + `ManipulatorSystem` |
+| Trajectory / trail visualization | Working — `Trail` component (ring-buffer backed) |
 | Coordinate frame overlay | Working |
-| GLB model loading (RobotLoader) | **Built — not yet wired into scene (T-021)** |
-| Inverse kinematics | **Stub — throws** |
+| End-effector frame overlay | Working — `EndEffectorFrame`, updated imperatively each frame |
+| GLB model loading (ridgeback_franka) | **Working** — `MovingRobot` in `SceneRoot` (T-021) |
+| Inverse kinematics (DLS Jacobian) | **Working** — `solveIK()` in `InverseKinematics.ts`; `SET_IK_TARGET` wired |
+| EventBus | Working — `tick` + `reset` events emitted; `getEventBus()` exported |
 | Collision detection | **Stub — no-op** |
 | Path planning | **Stub — no-op** |
 | Gamepad input | **Stub — no-op** |
-| IK worker (Comlink) | **Stub — throws** |
+| IK worker (Comlink) | **Stub** — main-thread IK is functional; worker offload is future |
 | Planner worker (Comlink) | **Stub — throws** |
 
 ---

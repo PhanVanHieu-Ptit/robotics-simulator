@@ -4,6 +4,8 @@ export interface DriveCommand {
   readonly type: 'DRIVE'
   readonly linear: number  // m/s
   readonly angular: number // rad/s
+  /** When set, command targets only this robot; omit to broadcast to all mobile robots. */
+  readonly robotId?: string
 }
 
 export interface JointCommand {

@@ -15,11 +15,7 @@
 
 ## P0 — Blockers
 
-| ID | Task | Key Files | Notes |
-|----|------|-----------|-------|
-| T-001 | Implement IK solver (FABRIK or Jacobian pseudo-inverse) | `src/simulation/kinematics/InverseKinematics.ts`, `src/workers/ik.worker.ts` | `solveIK()` throws; `IKCommand` type exists with no handler |
-| T-002 | Wire `IKCommand` into `InputSystem` | `src/simulation/systems/InputSystem.ts` | Case exists in union but no dispatch branch |
-| T-003 | Extract end-effector quaternion from final FK transform | `src/simulation/robots/FrankaArm.ts` line where `endEffectorPose` is built | BUG-1: quaternion hardcoded to `[0,0,0,1]` |
+_No active blockers._ All P0 items completed on branch `update-frank-arm-mesh`.
 
 ---
 
@@ -27,7 +23,7 @@
 
 | ID | Task | Key Files | Notes |
 |----|------|-----------|-------|
-| T-021 | Wire `RobotLoader` into `SceneRoot` for `ridgeback_franka` | `src/rendering/scene/SceneRoot.tsx`, `src/rendering/robots/RobotLoader.tsx` | Component + hook built; just needs mounting in the scene tree alongside or replacing primitive meshes |
+| T-015 | Add schema validation for robot JSON configs | `src/config/robots/*.json`, `src/simulation/robots/FrankaArm.ts` | D5: no boundary validation at JSON parse time |
 
 ---
 
@@ -36,10 +32,8 @@
 | ID | Task | Key Files | Notes |
 |----|------|-----------|-------|
 | T-009 | Implement Gamepad input | `src/input/GamepadController.ts` | Stub; use `navigator.getGamepads()` |
-| T-010 | Derive visual link lengths from DH params | `src/rendering/robots/FrankaArm.tsx` (LINK_LENGTHS const) | INC-1: hardcoded values can drift from DH config |
-| T-011 | Add `robotId` to `DriveCommand` | `src/simulation/types/Command.ts`, `src/simulation/systems/InputSystem.ts` | BUG-3: currently targets all robots |
-| T-014 | Instantiate and connect `EventBus` in engine | `src/simulation/core/EventBus.ts`, `src/simulation/core/SimulationEngine.ts` | SCALE-4: defined but never used |
-| T-015 | Add schema validation for robot JSON configs | `src/config/robots/*.json`, `src/simulation/robots/FrankaArm.ts` | D5: no boundary validation |
+| T-010 | Derive visual link lengths from DH params | `src/rendering/robots/FrankaArm.tsx` (LINK_LENGTHS const) | INC-1: hardcoded values; low priority now GLB is primary renderer |
+| T-016 | Implement `CollisionSystem` (BVH broadphase) | `src/simulation/systems/CollisionSystem.ts`, `src/simulation/world/Obstacle.ts` | Consider `@react-three/rapier` for physics |
 
 ---
 
@@ -47,11 +41,9 @@
 
 | ID | Task | Key Files | Notes |
 |----|------|-----------|-------|
-| T-016 | Implement `CollisionSystem` (BVH broadphase) | `src/simulation/systems/CollisionSystem.ts`, `src/simulation/world/Obstacle.ts` | Consider `@react-three/rapier` for physics |
 | T-017 | Implement `PathPlannerSystem` (RRT/PRM) | `src/simulation/systems/PathPlannerSystem.ts`, `src/workers/planner.worker.ts` | Worker thread via Comlink pattern already documented |
 | T-018 | Support dynamic robot spawning | `src/rendering/scene/SceneRoot.tsx` | SCALE-3: robots hard-coded in scene |
 | T-019 | Allow multi-world testing (break engine singleton) | `src/simulation/core/SimulationEngine.ts`, `src/hooks/useSimulation.ts` | SCALE-1: module singleton blocks isolation |
-| T-020 | Debounce `PerformanceMonitor` renders | `src/ui/panels/PerformanceMonitor.tsx` | PERF-5: re-renders every tick |
 
 ---
 
@@ -59,12 +51,18 @@
 
 | ID | Task | Completed | Reference |
 |----|------|-----------|-----------|
+| T-001 | Implement IK solver (DLS Jacobian pseudo-inverse) | 2026-06-14 | branch update-frank-arm-mesh — `InverseKinematics.ts`; 8 unit tests; converges to ≤1 mm for reachable targets |
+| T-002 | Wire `IKCommand` into `InputSystem` | 2026-06-14 | branch update-frank-arm-mesh — `FrankaArm.applyCommand()` stores target; `step()` invokes `solveIK()` then clears it |
 | T-003 | Extract end-effector quaternion from final FK transform | 2026-06-13 | branch fix-control — `mat3ToQuat()` wired in `FrankaArm.buildState()` |
 | T-004 | Write unit tests for FK computation | 2026-06-13 | branch fix-control — `ForwardKinematics.test.ts` (28 tests) |
 | T-005 | Write unit tests for DiffDrive kinematics | 2026-06-13 | branch fix-control — `DifferentialDrive.test.ts` (23 tests) |
 | T-006 | Fix `FrankaArmMesh` matrix allocation (PERF-1) | 2026-06-13 | `FrankaArm.tsx` — `useFrame` + direct `group.matrix.set()`; zero allocs/frame, zero React re-renders |
 | T-007 | Fix FPS metric to use wall-clock, not tick time | 2026-06-13 | `WorldSnapshot.wallDeltaSec` propagated to `metricsStore`; FPS = `1/wallDeltaSec` |
 | T-008 | Replace `TrajectorySystem` splice with ring buffer (PERF-4) | 2026-06-13 | `TrajectorySystem.ts` — `PositionRingBuffer` class; O(1) push, no array shifting |
+| T-011 | Add `robotId` to `DriveCommand` for targeted dispatch | 2026-06-14 | branch update-frank-arm-mesh — `DriveCommand.robotId?` optional; `InputSystem` routes targeted vs broadcast; 3 new tests |
 | T-012 | Read speeds from robot config in `InputMapper` | 2026-06-13 | `InputMapper.ts` imports `diffDriveConfig`; tests updated to match |
 | T-013 | Remove React subscriptions from `DiffDriveRobot` (PERF-2) | 2026-06-13 | `DifferentialDriveRobot.tsx` already uses `useFrame` + `getState()` — zero re-renders |
+| T-014 | Wire `EventBus` into `SimulationEngine` | 2026-06-14 | branch update-frank-arm-mesh — `SimulationEngine` accepts optional `bus`; emits `tick` + `reset`; `getEventBus()` exported from `useSimulation.ts` |
+| T-021 | Wire `RobotLoader` into `SceneRoot` for `ridgeback_franka` | 2026-06-14 | branch update-frank-arm-mesh — `MovingRobot` component in `SceneRoot.tsx`; GLB loaded, hierarchy traversed, joints registered; `ManipulatorSystem` + `ForwardKinematicsSystem` drive the arm |
+| INC-2 | `IKCommand` type exists but is never handled | 2026-06-14 | branch update-frank-arm-mesh — `FrankaArm.applyCommand()` now handles `SET_IK_TARGET`; `InputSystem` routes it via `robotId` dispatch |
 | INC-3 | Fix `DifferentialDrive.dhTransforms` returning identity | 2026-06-13 | `DifferentialDrive.ts` — `buildState()` computes 4×4 world transform from basePose; 3 new tests |

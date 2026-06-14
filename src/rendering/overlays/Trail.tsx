@@ -21,7 +21,12 @@ export function Trail({
   // Pre-allocated position array — one Float32Array for the lifetime of this component.
   const posArr = useMemo(() => new Float32Array(maxPoints * 3), [maxPoints])
 
-  const geomRef = useRef<THREE.BufferGeometry>(null!)
+  // Imperative THREE.Line to avoid the <line> JSX conflict with SVG's IntrinsicElements.
+  const lineObj = useMemo(() => {
+    const geom = new THREE.BufferGeometry()
+    const mat = new THREE.LineBasicMaterial({ color })
+    return new THREE.Line(geom, mat)
+  }, [color])
 
   // Change-detection refs — no state, no re-renders.
   const prevLen = useRef(0)
@@ -33,13 +38,13 @@ export function Trail({
   useEffect(() => {
     const attr = new THREE.BufferAttribute(posArr, 3)
     attr.setUsage(THREE.DynamicDrawUsage)
-    geomRef.current.setAttribute('position', attr)
-    geomRef.current.setDrawRange(0, 0)
+    lineObj.geometry.setAttribute('position', attr)
+    lineObj.geometry.setDrawRange(0, 0)
 
     return () => {
-      geomRef.current?.dispose()
+      lineObj.geometry.dispose()
     }
-  }, [posArr])
+  }, [posArr, lineObj])
 
   useFrame(() => {
     const traj = useRobotStore.getState().trajectories[robotId]
@@ -67,15 +72,10 @@ export function Trail({
       posArr[i * 3 + 2] = z
     }
 
-    const attr = geomRef.current.getAttribute('position') as THREE.BufferAttribute
+    const attr = lineObj.geometry.getAttribute('position') as THREE.BufferAttribute
     attr.needsUpdate = true
-    geomRef.current.setDrawRange(0, n)
+    lineObj.geometry.setDrawRange(0, n)
   })
 
-  return (
-    <line visible={showTrajectory}>
-      <bufferGeometry ref={geomRef} />
-      <lineBasicMaterial color={color} />
-    </line>
-  )
+  return <primitive object={lineObj} visible={showTrajectory} />
 }
