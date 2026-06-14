@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { dhTransform, computeFK, mat4Multiply, mat4Position, mat3ToQuat } from '../ForwardKinematics'
+import {
+  dhTransform, computeFK, mat4Multiply, mat4Position, mat3ToQuat,
+  dhTransformInto, mat4MultiplyInto, computeFKInto, newMutableMat4,
+  type MutableMat4,
+} from '../ForwardKinematics'
 import type { DHParam } from '../DHParameters'
 import frankaConfig from '@config/robots/franka_panda.json'
 
@@ -262,5 +266,100 @@ describe('mat4Position', () => {
     expect(pos[0]).toBeCloseTo(3, 10) // a·cos(0)
     expect(pos[1]).toBeCloseTo(0, 10) // a·sin(0)
     expect(pos[2]).toBeCloseTo(7, 10) // d
+  })
+})
+
+// ─── dhTransformInto ──────────────────────────────────────────────────────────
+
+describe('dhTransformInto', () => {
+  it('matches dhTransform output for arbitrary params', () => {
+    const p: DHParam = { a: 0.5, d: 0.3, alpha: Math.PI / 3, thetaOffset: 0.2 }
+    const theta = 1.1
+    const expected = dhTransform(p, theta)
+    const out = newMutableMat4()
+    dhTransformInto(p, theta, out)
+    out.forEach((v, i) => expect(v).toBeCloseTo(expected[i]!, 12))
+  })
+
+  it('overwrites previous buffer contents', () => {
+    const p: DHParam = { a: 0, d: 0, alpha: 0, thetaOffset: 0 }
+    const out = [9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9] as unknown as MutableMat4
+    dhTransformInto(p, 0, out)
+    const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
+    out.forEach((v, i) => expect(v).toBeCloseTo(identity[i]!, 12))
+  })
+})
+
+// ─── mat4MultiplyInto ────────────────────────────────────────────────────────
+
+describe('mat4MultiplyInto', () => {
+  const IDENT = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] as unknown as MutableMat4
+
+  it('matches mat4Multiply output', () => {
+    const A = dhTransform({ a: 0.3, d: 0.1, alpha: 0.5, thetaOffset: 0 }, 0.2)
+    const B = dhTransform({ a: 0.1, d: 0.2, alpha: -0.3, thetaOffset: 0 }, 0.5)
+    const expected = mat4Multiply(A, B)
+    const out = newMutableMat4()
+    mat4MultiplyInto(A, B, out)
+    out.forEach((v, i) => expect(v).toBeCloseTo(expected[i]!, 12))
+  })
+
+  it('identity × A = A', () => {
+    const A = dhTransform({ a: 0.5, d: 0.3, alpha: Math.PI / 3, thetaOffset: 0.1 }, 0.7)
+    const out = newMutableMat4()
+    mat4MultiplyInto(IDENT, A, out)
+    out.forEach((v, i) => expect(v).toBeCloseTo(A[i]!, 12))
+  })
+})
+
+// ─── computeFKInto ───────────────────────────────────────────────────────────
+
+describe('computeFKInto', () => {
+  it('produces the same results as computeFK for a single joint', () => {
+    const p: DHParam = { a: 0.5, d: 0.3, alpha: 1.0, thetaOffset: 0.1 }
+    const theta = 0.7
+    const ref = computeFK([p], [theta])
+    const out = [newMutableMat4()]
+    computeFKInto([p], [theta], out, newMutableMat4(), newMutableMat4())
+    out[0]!.forEach((v, i) => expect(v).toBeCloseTo(ref[0]![i]!, 12))
+  })
+
+  it('produces the same results as computeFK for two stacked joints', () => {
+    const params: DHParam[] = [
+      { a: 0, d: 0.1, alpha: 0, thetaOffset: 0 },
+      { a: 0, d: 0.1, alpha: 0, thetaOffset: 0 },
+    ]
+    const ref = computeFK(params, [0, 0])
+    const out = [newMutableMat4(), newMutableMat4()]
+    computeFKInto(params, [0, 0], out, newMutableMat4(), newMutableMat4())
+    out.forEach((mat, i) => mat.forEach((v, j) => expect(v).toBeCloseTo(ref[i]![j]!, 12)))
+  })
+
+  it('7-DOF Franka at home: EE position matches computeFK ground truth', () => {
+    const ref = computeFK(frankaConfig.dhParams, frankaConfig.initialAngles)
+    const out = frankaConfig.dhParams.map(() => newMutableMat4())
+    computeFKInto(frankaConfig.dhParams, frankaConfig.initialAngles, out, newMutableMat4(), newMutableMat4())
+    const eeRef = mat4Position(ref[6]!)
+    const eeOut = mat4Position(out[6]!)
+    expect(eeOut[0]).toBeCloseTo(eeRef[0], 10)
+    expect(eeOut[1]).toBeCloseTo(eeRef[1], 10)
+    expect(eeOut[2]).toBeCloseTo(eeRef[2], 10)
+  })
+
+  it('subsequent calls overwrite previous results correctly', () => {
+    const params: DHParam[] = [{ a: 0, d: 0.5, alpha: 0, thetaOffset: 0 }]
+    const out = [newMutableMat4()]
+    const acc = newMutableMat4()
+    const loc = newMutableMat4()
+
+    computeFKInto(params, [0], out, acc, loc)
+    const first = [...out[0]!]
+
+    computeFKInto(params, [Math.PI / 2], out, acc, loc)
+    const second = [...out[0]!]
+
+    // Rotation should differ between the two calls
+    expect(first[0]).toBeCloseTo(1, 10)  // cos(0)
+    expect(second[0]).toBeCloseTo(0, 10) // cos(π/2)
   })
 })

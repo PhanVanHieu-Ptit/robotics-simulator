@@ -19,7 +19,9 @@
       "Bash(node -e \"const pkg = require\\('./node_modules/vitest/package.json'\\); console.log\\(JSON.stringify\\(pkg.exports?.['.']\\), JSON.stringify\\(pkg.types\\), JSON.stringify\\(pkg.typings\\)\\)\")",
       "Bash(node -e \"const pkg = require\\('./node_modules/@react-three/fiber/package.json'\\); console.log\\(JSON.stringify\\(pkg.exports?.['.'], null, 2\\)\\)\")",
       "Bash(node -e \"const pkg = require\\('./node_modules/@react-three/fiber/package.json'\\); console.log\\(pkg.main, pkg.module, pkg.types, pkg.typings\\)\")",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(npx eslint *)",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\"; cat \"{}\"')"
     ]
   }
 }

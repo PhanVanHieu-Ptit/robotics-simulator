@@ -29,8 +29,6 @@ _No active P1 items._
 
 | ID | Task | Key Files | Notes |
 |----|------|-----------|-------|
-| T-009 | Implement Gamepad input | `src/input/GamepadController.ts` | Stub; use `navigator.getGamepads()` |
-| T-020 | Finish PERF-3: mutate FK transforms in-place | `src/simulation/kinematics/ForwardKinematics.ts`, `src/simulation/robots/FrankaArm.ts` | `_jointStatesCache` done (2026-06-14); remaining: pre-allocate Mat4 array in computeFK |
 | T-010 | Derive visual link lengths from DH params | `src/rendering/robots/FrankaArm.tsx` (LINK_LENGTHS const) | INC-1: hardcoded values; low priority now GLB is primary renderer |
 | T-016 | Implement `CollisionSystem` (BVH broadphase) | `src/simulation/systems/CollisionSystem.ts`, `src/simulation/world/Obstacle.ts` | Consider `@react-three/rapier` for physics |
 
@@ -68,3 +66,6 @@ _No active P1 items._
 | T-021 | Wire `RobotLoader` into `SceneRoot` for `ridgeback_franka` | 2026-06-14 | branch update-frank-arm-mesh — `MovingRobot` component in `SceneRoot.tsx`; GLB loaded, hierarchy traversed, joints registered; `ManipulatorSystem` + `ForwardKinematicsSystem` drive the arm |
 | INC-2 | `IKCommand` type exists but is never handled | 2026-06-14 | branch update-frank-arm-mesh — `FrankaArm.applyCommand()` now handles `SET_IK_TARGET`; `InputSystem` routes it via `robotId` dispatch |
 | INC-3 | Fix `DifferentialDrive.dhTransforms` returning identity | 2026-06-13 | `DifferentialDrive.ts` — `buildState()` computes 4×4 world transform from basePose; 3 new tests |
+| T-009 | Implement Gamepad input | 2026-06-14 | `GamepadController.ts` — left-stick analog; `mapAnalogToCommands()`; deadzone 0.15; 14 tests |
+| T-020 | Finish PERF-3: eliminate FK allocations (computeFKInto) | 2026-06-14 | `ForwardKinematics.ts` — `computeFKInto`, `dhTransformInto`, `mat4MultiplyInto`; `FrankaArm` pre-allocates 3 buffers; 97% fewer allocs/tick; 8 tests |
+| PERF-6 | Consolidate dual RAF loops | 2026-06-14 | `inputControllerSingleton.ts` + `useInputController.ts` (mount-only) + `useSimulationFrame.ts` (samples input + ticks engine) |

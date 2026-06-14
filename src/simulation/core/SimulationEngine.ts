@@ -3,6 +3,7 @@ import type { System } from '../systems/System'
 import type { SimulationClock } from './SimulationClock'
 import type { SimulationWorld } from '../world/SimulationWorld'
 import type { EventBus, SimulationEvents } from './EventBus'
+import type { TrajectorySystem } from '../systems/TrajectorySystem'
 
 export class SimulationEngine {
   constructor(
@@ -12,6 +13,8 @@ export class SimulationEngine {
     private readonly onSnapshot: (snapshot: WorldSnapshot) => void,
     /** Optional event bus — callers subscribe to 'tick' / 'reset' / future events. */
     public readonly bus?: EventBus<SimulationEvents>,
+    /** Typed reference to TrajectorySystem for snapshot extraction after tick. */
+    private readonly trajectorySystem?: TrajectorySystem,
   ) {}
 
   /**
@@ -30,11 +33,13 @@ export class SimulationEngine {
     const frameTime = performance.now() - wallStart
 
     this.onSnapshot({
-      simTime: this.clock.simTime,
+      simTime:      this.clock.simTime,
       frameTime,
       wallDeltaSec: rawDelta ?? this.clock.fixedDt,
-      robots: this.world.getRobotSnapshots(),
-      trajectories: this.world.getTrajectories(),
+      robots:       this.world.getRobotSnapshots(),
+      // Use TrajectorySystem's snapshot if available — avoids the O(n) copy
+      // that world.getTrajectories() performs per-push inside TrajectorySystem.tick().
+      trajectories: this.trajectorySystem?.getTrajectorySnapshot() ?? this.world.getTrajectories(),
     })
 
     this.bus?.emit('tick', { dt, simTime: this.clock.simTime })
@@ -47,6 +52,7 @@ export class SimulationEngine {
   reset(): void {
     this.world.reset()
     this.clock.reset()
+    this.trajectorySystem?.clearAll()
     this.bus?.emit('reset', undefined)
   }
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import { Typography } from 'antd'
-import { useRendererStore } from '@store/rendererStore'
+import { rendererStore } from '@store/rendererStore'
 
 const { Title } = Typography
 
@@ -30,7 +30,7 @@ function Metric({
   )
 }
 
-// Reads renderer stats from useRendererStore via vanilla subscribe and writes
+// Reads renderer stats from rendererStore via plain subscribe and writes
 // directly to DOM refs — never triggers a React re-render while the scene runs.
 export function PerformancePanel() {
   const callsRef     = useRef<HTMLSpanElement>(null)
@@ -39,8 +39,7 @@ export function PerformancePanel() {
   const texturesRef  = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
-    return useRendererStore.subscribe((s) => {
-      const { calls, geometries, triangles, textures } = s.stats
+    return rendererStore.subscribe((calls, geometries, triangles, textures) => {
       if (callsRef.current)    callsRef.current.textContent    = String(calls)
       if (geomRef.current)     geomRef.current.textContent     = String(geometries)
       if (trisRef.current)     trisRef.current.textContent     = triangles.toLocaleString()

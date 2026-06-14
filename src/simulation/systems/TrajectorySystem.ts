@@ -4,7 +4,7 @@ import type { Pose3D } from '../types/RobotState'
 import { SimulationConfig } from '@config/simulation'
 
 // Circular buffer: O(1) push and overflow — no splice, no element shifting.
-class PositionRingBuffer {
+export class PositionRingBuffer {
   private readonly data: Pose3D[]
   private head = 0
   private _count = 0
@@ -23,7 +23,6 @@ class PositionRingBuffer {
       this.data[(this.head + this._count) % this.capacity] = pose
       this._count++
     } else {
-      // Buffer full: overwrite oldest slot and advance head
       this.data[this.head] = pose
       this.head = (this.head + 1) % this.capacity
     }
@@ -38,17 +37,23 @@ class PositionRingBuffer {
     return this._count > 0 ? this.at(this._count - 1) : undefined
   }
 
-  // Copy positions in linear order (oldest → newest) into a Float32Array.
-  // Returns the number of points written.
+  /** Copy positions oldest→newest into a Float32Array. Returns point count. */
   writeTo(target: Float32Array): number {
     const n = this._count
     for (let i = 0; i < n; i++) {
       const [x, y, z] = this.at(i).position
-      target[i * 3] = x
+      target[i * 3]     = x
       target[i * 3 + 1] = y
       target[i * 3 + 2] = z
     }
     return n
+  }
+
+  /** Linearise to a plain Pose3D array (one allocation per call). */
+  toArray(): Pose3D[] {
+    const out: Pose3D[] = new Array(this._count)
+    for (let i = 0; i < this._count; i++) out[i] = this.at(i)
+    return out
   }
 
   clear(): void {
@@ -76,7 +81,7 @@ export class TrajectorySystem implements System {
         this.buffers.set(robot.id, buf)
       }
 
-      // Dead-band: skip if moved < 1 mm (avoids adding duplicate points)
+      // Dead-band: skip if moved < 1 mm (avoids duplicate points)
       const last = buf.last()
       if (last) {
         const dx = position[0] - last.position[0]
@@ -86,18 +91,23 @@ export class TrajectorySystem implements System {
       }
 
       buf.push(robot.state.endEffectorPose)
-
-      // Keep robot.trajectoryBuffer linear for WorldSnapshot compatibility.
-      // Only runs when a new point is actually added (dead-band filtered).
-      const n = buf.count
-      robot.trajectoryBuffer.length = n
-      for (let i = 0; i < n; i++) {
-        robot.trajectoryBuffer[i] = buf.at(i)
-      }
     }
   }
 
-  /** Direct access to the ring buffer for renderers that want to bypass the store. */
+  /**
+   * Build a `Record<robotId, Pose3D[]>` from the current ring buffers.
+   * Called once per tick by SimulationEngine — O(n) per robot, but only once,
+   * not inside the per-push hot path.
+   */
+  getTrajectorySnapshot(): Record<string, readonly Pose3D[]> {
+    const result: Record<string, readonly Pose3D[]> = {}
+    for (const [id, buf] of this.buffers) {
+      result[id] = buf.toArray()
+    }
+    return result
+  }
+
+  /** Direct access to the ring buffer for renderers that bypass the store. */
   getBuffer(robotId: string): PositionRingBuffer | undefined {
     return this.buffers.get(robotId)
   }

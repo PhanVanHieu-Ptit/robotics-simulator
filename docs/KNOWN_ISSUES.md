@@ -67,14 +67,9 @@ Confirmed bugs, anti-patterns, and scalability risks found by static analysis. E
 
 ---
 
-### PERF-6: Dual RAF loops (simulation frame + input controller)
+### ~~PERF-6: Dual RAF loops (simulation frame + input controller)~~ FIXED
 
-**File**: [src/rendering/hooks/useSimulationFrame.ts](src/rendering/hooks/useSimulationFrame.ts), [src/input/hooks/useInputController.ts](src/input/hooks/useInputController.ts)
-**Severity**: Low
-
-Two independent `requestAnimationFrame` loops run simultaneously. The input loop can fire commands at a different cadence than the simulation tick, leading to command accumulation in the queue between ticks.
-
-**Fix**: Drive input sampling from inside `useSimulationFrame` (read keyboard state before calling `engine.tick()`), eliminating the second RAF loop.
+`useInputController` now only mounts/unmounts `KeyboardController` + `GamepadController` and registers them in `inputControllerSingleton`. `useSimulationFrame` samples input from the singleton before each `engine.tick()`, unifying all work into R3F's single `useFrame` callback. Second RAF loop eliminated.
 
 ---
 

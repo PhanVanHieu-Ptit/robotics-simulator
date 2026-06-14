@@ -47,7 +47,7 @@ src/
 │   └── hooks/           # useSimulationFrame, useRobotGeometry, useRobotLoader
 ├── store/               # Zustand slices (simulation, robot, scene)
 ├── ui/                  # Ant Design panels, layout, components
-├── input/               # KeyboardController, InputMapper, useInputController
+├── input/               # KeyboardController, GamepadController, InputMapper, inputControllerSingleton, useInputController
 ├── hooks/               # useSimulation, useRobotCommands (engine bridge)
 ├── config/              # SimulationConfig, robot JSON configs
 └── workers/             # ik.worker.ts, planner.worker.ts (stubs, not yet wired)
@@ -72,7 +72,7 @@ src/
 | EventBus | Working — `tick` + `reset` events emitted; `getEventBus()` exported |
 | Collision detection | **Stub — no-op** |
 | Path planning | **Stub — no-op** |
-| Gamepad input | **Stub — no-op** |
+| Gamepad input | **Working** — `GamepadController` + `mapAnalogToCommands`; left-stick analog; deadzone 0.15 |
 | IK worker (Comlink) | **Stub** — main-thread IK is functional; worker offload is future |
 | Planner worker (Comlink) | **Stub — throws** |
 

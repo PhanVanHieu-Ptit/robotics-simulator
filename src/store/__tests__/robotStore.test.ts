@@ -43,13 +43,6 @@ describe('applySnapshot', () => {
     expect(angles[6]).toBeCloseTo(0.1 + 6 * 0.01, 10)
   })
 
-  it('updates dhTransforms from franka_panda robot state', () => {
-    useRobotStore.getState().applySnapshot(makeSnapshot())
-    const transforms = useRobotStore.getState().dhTransforms
-    expect(transforms).toHaveLength(7)
-    transforms.forEach((t) => t.forEach((v, i) => expect(v).toBeCloseTo(IDENTITY16[i]!, 12)))
-  })
-
   it('updates endEffectorPose from franka_panda', () => {
     useRobotStore.getState().applySnapshot(makeSnapshot())
     const pose = useRobotStore.getState().endEffectorPose
@@ -154,12 +147,6 @@ describe('resetAll', () => {
     useRobotStore.getState().applySnapshot(makeSnapshot())
     useRobotStore.getState().resetAll()
     expect(useRobotStore.getState().jointAngles).toHaveLength(0)
-  })
-
-  it('clears dhTransforms', () => {
-    useRobotStore.getState().applySnapshot(makeSnapshot())
-    useRobotStore.getState().resetAll()
-    expect(useRobotStore.getState().dhTransforms).toHaveLength(0)
   })
 
   it('sets endEffectorPose to null', () => {

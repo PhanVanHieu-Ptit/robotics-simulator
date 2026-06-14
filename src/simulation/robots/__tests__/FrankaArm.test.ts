@@ -123,7 +123,9 @@ describe('FrankaArm', () => {
     })
 
     it('dhTransforms updated after SET_JOINT + step', () => {
-      const before = arm.state.dhTransforms[6]!
+      // Snapshot values before the command — dhTransforms reuses internal buffers
+      // so we must copy, not just capture a reference.
+      const before = [...arm.state.dhTransforms[6]!]
       arm.applyCommand({ type: 'SET_JOINT', robotId: 'franka_panda', index: 6, angle: 0 })
       arm.step(0)
       // Joint 7 changed → final transform should differ

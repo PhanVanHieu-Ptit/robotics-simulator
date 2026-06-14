@@ -39,10 +39,12 @@ function createEngine(): SimulationEngine {
   world.addRobot(new FrankaArm(validateFrankaConfig(frankaConfig)))
   world.addRobot(new DifferentialDrive(validateDiffDriveConfig(diffDriveConfig)))
 
+  const trajectorySystem = new TrajectorySystem()
+
   return new SimulationEngine(
     world,
     clock,
-    [new InputSystem(), new KinematicsSystem(), new TrajectorySystem()],
+    [new InputSystem(), new KinematicsSystem(), trajectorySystem],
     (snapshot) => {
       useRobotStore.getState().applySnapshot(snapshot)
       if (useSimulationStore.getState().isRunning) {
@@ -50,6 +52,7 @@ function createEngine(): SimulationEngine {
       }
     },
     _bus,
+    trajectorySystem,
   )
 }
 
