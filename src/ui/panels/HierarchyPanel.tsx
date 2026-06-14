@@ -63,7 +63,6 @@ function HierarchyTree() {
   return (
     <Tree
       treeData={treeData}
-      defaultExpandDepth={2}
       showLine={{ showLeafIcon: false }}
       style={{ background: 'transparent', fontSize: 12 }}
     />

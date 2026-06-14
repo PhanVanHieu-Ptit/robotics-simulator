@@ -8,7 +8,7 @@ export function mat4Multiply(a: Mat4, b: Mat4): Mat4 {
   for (let row = 0; row < 4; row++) {
     for (let col = 0; col < 4; col++) {
       for (let k = 0; k < 4; k++) {
-        r[row * 4 + col] += a[row * 4 + k] * b[k * 4 + col]
+        r[row * 4 + col] = (r[row * 4 + col] ?? 0) + (a[row * 4 + k] ?? 0) * (b[k * 4 + col] ?? 0)
       }
     }
   }
@@ -53,6 +53,11 @@ export function computeFK(dhParams: readonly DHParam[], jointAngles: readonly nu
 /** Extract translation vector from a row-major Mat4. */
 export function mat4Position(m: Mat4): readonly [number, number, number] {
   return [m[3], m[7], m[11]]
+}
+
+/** Extract z-axis (3rd column) from a row-major Mat4 — rotation axis for revolute joints. */
+export function mat4ZAxis(m: Mat4): [number, number, number] {
+  return [m[2], m[6], m[10]]
 }
 
 /**

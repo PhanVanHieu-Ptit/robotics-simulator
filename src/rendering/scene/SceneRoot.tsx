@@ -51,6 +51,22 @@ function MovingRobot() {
     registerNodes(robot.scene, result.jointCandidates)
     useManipulatorStore.getState().setJoints(result.jointCandidates)
     initFK(result.jointCandidates)
+
+    // Identify Franka arm joints ordered by DH index so the sim bridge and
+    // slider dispatch can map DH joint index ↔ GLB node UUID.
+    // The updated mesh uses Link1–Link7 for the 7 actuated joints; Link0 is
+    // the fixed base and must be excluded.
+    const armJoints = result.jointCandidates
+      .filter((j) => {
+        const m = j.name.match(/^Link(\d+)$/i)
+        return m !== null && parseInt(m[1]!, 10) >= 1
+      })
+      .sort((a, b) => {
+        const na = parseInt(a.name.match(/\d+/)?.[0] ?? '0', 10)
+        const nb = parseInt(b.name.match(/\d+/)?.[0] ?? '0', 10)
+        return na - nb
+      })
+    useManipulatorStore.getState().setArmJoints(armJoints)
   }, [])
 
   useFrame(() => {

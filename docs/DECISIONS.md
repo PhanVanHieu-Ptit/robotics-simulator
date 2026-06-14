@@ -103,3 +103,41 @@ Captures non-obvious architectural choices. Where evidence is indirect, marked *
 **Decision**: `sceneStore` uses Zustand's `persist` middleware with key `'robotics-sim-scene'`.
 
 **Why**: Scene toggles (grid, coordinate frames, trajectory visibility) are user preferences that should survive page reload. Simulation runtime state (`simulationStore`, `robotStore`) is not persisted — it always starts fresh.
+
+---
+
+## D12 — Three.js Hierarchy as the FK Solver for GLB Models
+
+**Decision**: `ForwardKinematicsSystem.ts` reads the end-effector pose by calling `eeNode.updateWorldMatrix(true, false)` and decomposing `matrixWorld`, rather than re-running the DH parameter chain.
+
+**Why**: The GLB file encodes all kinematic geometry (link offsets, twist) as rest-pose local transforms in the node hierarchy. `applyAngles()` injects joint variables via `node.rotation.y = θ`, and Three.js computes the full FK product internally when the world matrix is requested. This eliminates any risk of DH ↔ mesh divergence and removes the need for a separate FK loop for the visual layer.
+
+**Trade-off**: The EE pose from the GLB hierarchy will differ from the analytic DH pose if the GLB rest pose does not match the DH convention. The two FK paths (DH for the sim engine, Three.js for the display) are currently independent; a future unification could validate them against each other in tests.
+
+---
+
+## D13 — Module-Level Node Registry in ManipulatorSystem
+
+**Decision**: `ManipulatorSystem.ts` keeps a module-level `nodeMap: Map<string, THREE.Object3D>` populated by `registerNodes()` on GLB load. Joint rotations are applied by `applyAngles()` which reads this map.
+
+**Why**: Consistent with the D1 singleton pattern for the engine. The node map is only valid for the loaded GLB scene; calling `registerNodes()` again (on reload) clears and repopulates it. Keeps the Zustand `useManipulatorStore` free of Three.js objects.
+
+**Trade-off**: The map is global — multiple simultaneous GLB instances would clobber each other. Acceptable for the current single-robot design; use a context or closure if multi-instance is needed.
+
+---
+
+## D14 — FK Display Throttled to 10 fps
+
+**Decision**: `computeFK()` in `ForwardKinematicsSystem.ts` writes the EE pose to `useFKStore` only every 6 frames (`DISPLAY_STRIDE = 6`), giving ~10 Hz display updates at 60 fps.
+
+**Why**: Writing to Zustand every frame triggers `useSyncExternalStore` reconciliation in every React component that subscribes to `useFKStore`, adding ~1 ms of React overhead per frame for the sidebar display. The 3D visualization group is updated imperatively every frame (no Zustand involved) so the visual stays smooth at full rate.
+
+---
+
+## D15 — EventBus Injected Optionally into SimulationEngine
+
+**Decision**: `SimulationEngine` accepts `bus?: EventBus<SimulationEvents>` as the 5th constructor argument. The bus is created in `useSimulation.ts` as a module-level singleton alongside `_engine`.
+
+**Why**: Makes the engine independently testable without requiring a bus (existing integration tests pass `buildEngine()` with no bus argument). Keeps the emission logic inside the engine where it belongs, while the bus instance lives at the app level where callers can access it via `getEventBus()`.
+
+**Trade-off**: `collision` and `trajectoryUpdated` events are defined in `SimulationEvents` but not yet emitted — those systems are stubs. Emitting them is a one-liner addition once `CollisionSystem` is implemented.

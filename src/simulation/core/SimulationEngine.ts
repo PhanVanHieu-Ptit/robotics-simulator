@@ -2,6 +2,7 @@ import type { WorldSnapshot } from '../types/WorldSnapshot'
 import type { System } from '../systems/System'
 import type { SimulationClock } from './SimulationClock'
 import type { SimulationWorld } from '../world/SimulationWorld'
+import type { EventBus, SimulationEvents } from './EventBus'
 
 export class SimulationEngine {
   constructor(
@@ -9,6 +10,8 @@ export class SimulationEngine {
     public readonly clock: SimulationClock,
     private readonly systems: readonly System[],
     private readonly onSnapshot: (snapshot: WorldSnapshot) => void,
+    /** Optional event bus — callers subscribe to 'tick' / 'reset' / future events. */
+    public readonly bus?: EventBus<SimulationEvents>,
   ) {}
 
   /**
@@ -33,6 +36,8 @@ export class SimulationEngine {
       robots: this.world.getRobotSnapshots(),
       trajectories: this.world.getTrajectories(),
     })
+
+    this.bus?.emit('tick', { dt, simTime: this.clock.simTime })
   }
 
   step(): void {
@@ -42,5 +47,6 @@ export class SimulationEngine {
   reset(): void {
     this.world.reset()
     this.clock.reset()
+    this.bus?.emit('reset', undefined)
   }
 }

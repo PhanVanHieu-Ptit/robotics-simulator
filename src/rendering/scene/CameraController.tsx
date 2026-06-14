@@ -18,7 +18,6 @@ export function CameraController() {
       target={[0, 0.5, 0]}
       // Re-position when preset changes via key
       key={preset}
-      // @ts-expect-error drei position prop
       position={positions[preset]}
       enableDamping
       dampingFactor={0.05}

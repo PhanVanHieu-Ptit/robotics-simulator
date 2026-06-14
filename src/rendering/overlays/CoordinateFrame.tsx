@@ -1,27 +1,33 @@
+import { useMemo } from 'react'
 import * as THREE from 'three'
 import { useRobotStore } from '@store/robotStore'
 import { useSceneStore } from '@store/sceneStore'
 
-const X_COLOR = new THREE.Color('#ff4060')
-const Y_COLOR = new THREE.Color('#80cc40')
-const Z_COLOR = new THREE.Color('#4080ff')
 const AXIS_LENGTH = 0.12
 
-interface AxisProps {
-  direction: THREE.Vector3
-  color: THREE.Color
+// Imperative THREE.Line instances to avoid the <line> JSX conflict with SVG's IntrinsicElements.
+function makeAxisLine(dx: number, dy: number, dz: number, color: string): THREE.Line {
+  const geom = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, 0, 0),
+    new THREE.Vector3(dx, dy, dz),
+  ])
+  const mat = new THREE.LineBasicMaterial({ color })
+  return new THREE.Line(geom, mat)
 }
 
-function Axis({ direction, color }: AxisProps) {
-  const points = [new THREE.Vector3(0, 0, 0), direction.clone().multiplyScalar(AXIS_LENGTH)]
+function AxisFrame() {
+  const lines = useMemo(() => [
+    makeAxisLine(AXIS_LENGTH, 0, 0, '#ff4060'),
+    makeAxisLine(0, AXIS_LENGTH, 0, '#80cc40'),
+    makeAxisLine(0, 0, AXIS_LENGTH, '#4080ff'),
+  ], [])
+
   return (
-    <line>
-      <bufferGeometry
-        setFromPoints={points}
-        // React Three Fiber handles this via direct prop
-      />
-      <lineBasicMaterial color={color} />
-    </line>
+    <>
+      {lines.map((line, i) => (
+        <primitive key={i} object={line} />
+      ))}
+    </>
   )
 }
 
@@ -47,9 +53,7 @@ export function CoordinateFrames() {
 
         return (
           <group key={i} position={pos} quaternion={quat}>
-            <Axis direction={new THREE.Vector3(1, 0, 0)} color={X_COLOR} />
-            <Axis direction={new THREE.Vector3(0, 1, 0)} color={Y_COLOR} />
-            <Axis direction={new THREE.Vector3(0, 0, 1)} color={Z_COLOR} />
+            <AxisFrame />
           </group>
         )
       })}

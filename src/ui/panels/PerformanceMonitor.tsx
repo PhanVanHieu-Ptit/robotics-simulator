@@ -8,7 +8,7 @@ const VALUE_STYLE: React.CSSProperties = {
   fontSize: 12, fontFamily: 'monospace', fontWeight: 600, color: '#aaa',
 }
 
-function Metric({ label, valueRef }: { label: string; valueRef: RefObject<HTMLSpanElement | null> }) {
+function Metric({ label, valueRef }: { label: string; valueRef: RefObject<HTMLSpanElement> }) {
   return (
     <div style={{ display: 'flex', gap: 4, alignItems: 'baseline' }}>
       <span style={LABEL_STYLE}>{label}</span>

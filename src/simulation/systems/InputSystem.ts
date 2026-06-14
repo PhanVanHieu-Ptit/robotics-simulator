@@ -13,10 +13,14 @@ export class InputSystem implements System {
         continue
       }
 
-      // Drive commands go to all mobile robots; joint commands are targeted by robotId
+      // Drive commands: targeted when robotId is set, otherwise broadcast to all robots
       if (cmd.type === 'DRIVE') {
-        for (const robot of world.robots.values()) {
-          robot.applyCommand(cmd)
+        if (cmd.robotId !== undefined) {
+          world.robots.get(cmd.robotId)?.applyCommand(cmd)
+        } else {
+          for (const robot of world.robots.values()) {
+            robot.applyCommand(cmd)
+          }
         }
       } else if ('robotId' in cmd) {
         const robot = world.robots.get(cmd.robotId)

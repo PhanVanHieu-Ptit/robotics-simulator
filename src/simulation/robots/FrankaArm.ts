@@ -3,6 +3,7 @@ import type { Pose3D, RobotState } from '../types/RobotState'
 import type { Robot } from './Robot'
 import type { DHParam } from '../kinematics/DHParameters'
 import { computeFK, mat4Position, mat3ToQuat } from '../kinematics/ForwardKinematics'
+import { solveIK } from '../kinematics/InverseKinematics'
 
 export interface FrankaArmConfig {
   readonly id: string
@@ -17,6 +18,7 @@ export class FrankaArm implements Robot {
   readonly trajectoryBuffer: Pose3D[] = []
 
   private _angles: number[]
+  private _ikTarget: Pose3D | null = null
 
   constructor(private readonly cfg: FrankaArmConfig) {
     this.id      = cfg.id
@@ -39,15 +41,29 @@ export class FrankaArm implements Robot {
   }
 
   applyCommand(cmd: Command): void {
-    if (cmd.type !== 'SET_JOINT' || cmd.robotId !== this.cfg.id) return
-    const limit = this.cfg.jointLimits[cmd.index]
-    if (!limit) return
-    this._angles[cmd.index] = Math.max(limit.min, Math.min(limit.max, cmd.angle))
+    if (cmd.type === 'SET_JOINT' && cmd.robotId === this.cfg.id) {
+      const limit = this.cfg.jointLimits[cmd.index]
+      if (!limit) return
+      this._angles[cmd.index] = Math.max(limit.min, Math.min(limit.max, cmd.angle))
+    } else if (cmd.type === 'SET_IK_TARGET' && cmd.robotId === this.cfg.id) {
+      this._ikTarget = cmd.target
+    }
   }
 
   step(_dt: number): void {
     // Franka is position-controlled; dynamics are simplified to instant joint tracking.
     // Future: add velocity/torque control with proper 2nd-order integration.
+    if (this._ikTarget !== null) {
+      const result = solveIK(
+        this.cfg.dhParams,
+        this._angles,
+        this._ikTarget,
+        100,
+        this.cfg.jointLimits,
+      )
+      this._angles = [...result.jointAngles]
+      this._ikTarget = null
+    }
     this.state = this.buildState()
   }
 
